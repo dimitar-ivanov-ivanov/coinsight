@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package ticker;
+
+// All of the prices are stored in int64 after being multiplied by 10^8
+// This is done to avoid string conversions which are slower with bigger memory footprint
+// Ingestor -> sets best_bid_price * 10^8 -> then the processor will divide by 10^8 to get the real price
+// With this change one of these messages in Kafka is about 100 bytes!
+message BinanceTicker {
+  int64 event_time = 1;        // "E" timestamp when the event happened in Binance system
+  string crypto_pair = 2;           // "s" -> crypto pair symbol
+  int64 best_bid_price = 3;    // "b" -> what you can sell for
+  int64 best_bid_qty = 4;      // "B" -> what you need to pay to buy
+  int64 best_ask_price = 5;    // "a" -> for liquidity purposes
+  int64 best_ask_qty = 6;      // "A" -> for liquidity purposes
+  int64 volume = 7;            // "v" -> ensure active trading
+  string timestamp = 8;         // When the event was created in our system, ISO8601 format
+  int32 message_id = 9;        // Unique identifier for the message, build using the event time, crypto pair and volume
+  int32 price_scale = 10;
+}
+/**
+ Not needed currently
+ event_type -> always "24hrTicker"
+ weighted_avg_price -> not needed for arbitrage
+ last_qty -> last trade size (irrelevant)
+ quote_volume -> can just use "volume" instead
+ stats_open_time
+ stats_close_time
+ first_trade_id
+ last_trade_id
+ trade_count
+  historical fields not needed currently:
+   price_change
+   price_change_percent
+   prev_close_price
+   open_price
+   high_price
+   low_price
+ */

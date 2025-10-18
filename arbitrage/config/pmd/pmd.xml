@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<!-- My preferred PMD configuration. -->
+<ruleset name="Custom ruleset"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 http://pmd.sourceforge.net/ruleset_2_0_0.xsd">
+    <description>
+        PMD configuration.
+    </description>
+
+    <rule ref="category/java/bestpractices.xml">
+        <!-- Some asserts are easy to understand and having too many assertions is ridiculous !-->
+        <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
+        <exclude name="UnitTestContainsTooManyAsserts"/>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml">
+        <exclude name="OnlyOneReturn" />
+        <exclude name="AtLeastOneConstructor" />
+        <!--I like my variable names long !-->
+        <exclude name="LongVariable" />
+        <!-- Variables names such as ex and e for exception are OK!-->
+        <exclude name="ShortVariable"/>
+
+        <!--I don't see much value in declaring everything as final !-->
+        <exclude name="MethodArgumentCouldBeFinal"/>
+        <exclude name="LocalVariableCouldBeFinal"/>
+
+        <!-- Using var for very long variables is OK!-->
+        <exclude name="UseExplicitTypes"/>
+        <!-- This isn't cool when making Mock classes that SHOULDN'T call super !-->
+        <exclude name="CallSuperInConstructor"/>
+        <!-- I don't like this one, just read the docs, it's so stupid !-->
+        <exclude name="CommentDefaultAccessModifier"/>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml/ClassNamingConventions">
+        <properties>
+            <property name="utilityClassPattern" value="[A-Z][a-zA-Z0-9]*" />
+        </properties>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml/ShortMethodName">
+        <properties>
+            <property name="minimum" value="4" />
+        </properties>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml/LinguisticNaming">
+        <properties>
+            <property name="checkSetters" value="false" />
+            <property name="violationSuppressXPath" value="//ClassOrInterfaceBodyDeclaration/Annotation/MarkerAnnotation//Name[@Image='Test']" />
+        </properties>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml/FieldNamingConventions">
+        <properties>
+            <property name="exclusions" value="serialVersionUID|logger" />
+        </properties>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml/MethodNamingConventions">
+        <properties>
+            <property name="junit5TestPattern" value="^given_[a-zA-Z0-9_]+_when_[a-zA-Z0-9_]+_then_[a-zA-Z0-9_]+$" />
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml">
+        <exclude name="LawOfDemeter" />
+        <exclude name="LoosePackageCoupling" />
+        <!-- In all cases I want to catch the exception and publish to DLT, no need for custom exceptions !-->
+        <exclude name="AvoidCatchingGenericException"/>
+        <exclude name="AvoidThrowingRawExceptionTypes"/>
+
+        <!-- I have some checked exceptions in setUp in tests, not a big deal !-->
+        <exclude name="SignatureDeclareThrowsException"/>
+    </rule>
+
+    <rule ref="category/java/documentation.xml">
+        <!-- This rule doesn't work for Mock classes !-->
+        <exclude name="UncommentedEmptyConstructor"/>
+        <!-- Excessive docs for get/set methods are not neeeded !-->
+        <exclude name="CommentRequired" />
+    </rule>
+
+    <rule ref="category/java/documentation.xml/CommentSize">
+        <properties>
+            <property name="maxLines" value="30" />
+            <property name="maxLineLength" value="150" />
+        </properties>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml/TooManyStaticImports">
+        <properties>
+            <property name="maximumStaticImports" value="10" />
+        </properties>
+    </rule>
+
+</ruleset>

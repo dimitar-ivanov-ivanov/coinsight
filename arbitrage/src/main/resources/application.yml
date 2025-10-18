@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: ingestor
+    environment: local
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:9093
+    compression-type: lz4 # use lz4 for better compression and lower memory footprint for messages
+  redis:
+    host: localhost
+    port: 6379
+    password: ""
+    timeout: 6000
+    lettuce:
+      pool:
+        max-active: 10
+        max-idle: 5
+        min-idle: 2
+
+server:
+  port: 8080
+
+kafka:
+  binance:
+    topic: binance-topic
+    dlt:
+      name: binance-dlt-topic
+      group: binance-dlt-consumer-group
+      enabled: false
+      threads: 4
+  coinbase:
+    topic: coinbase-topic
+    dlt:
+      name: coinbase-dlt-topic
+      group: coinbase-dlt-consumer-group
+      enabled: false
+      threads: 4
+  monitoring:
+    topic: monitor-topic
+    dlt:
+      name: monitor-dlt-topic

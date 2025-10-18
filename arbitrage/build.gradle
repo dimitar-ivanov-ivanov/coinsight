@@ -1,0 +1,104 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.0.0-M3'
+	id 'io.spring.dependency-management' version '1.1.7'
+    id 'checkstyle'
+    id 'pmd'
+    id 'com.google.protobuf' version '0.9.4'
+}
+
+group = 'coinsight'
+version = '0.0.1-SNAPSHOT'
+description = 'Project for crypto pairs arbitrage between different exchanges'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+checkstyle {
+    toolVersion = '10.12.1'
+    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+    maxErrors = 0
+    maxWarnings = 0
+    ignoreFailures = false
+}
+
+// exclude checking generated class
+checkstyleMain {
+    source = 'src/main/java'
+}
+
+pmd {
+    consoleOutput = true
+    toolVersion = "7.17.0"
+    rulesMinimumPriority = 5
+    ruleSetFiles = files("${rootDir}/config/pmd/pmd.xml")
+}
+
+// exclude checking generated class
+pmdMain {
+    source = 'src/main/java'
+}
+
+repositories {
+	mavenCentral()
+    // add repository needed for io.confluent:kafka-protobuf-serializer
+    maven {
+        url "https://packages.confluent.io/maven/"
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // web socket library
+    implementation 'org.java-websocket:Java-WebSocket:1.6.0'
+
+    // protobuf
+    implementation 'com.google.protobuf:protobuf-java:4.32.1'
+
+    // Kafka
+    implementation("org.springframework.kafka:spring-kafka:3.3.4")
+    implementation("io.confluent:kafka-protobuf-serializer:8.0.0")
+
+    // test container for Kafka
+    testImplementation("org.testcontainers:kafka:1.21.0")
+
+    // use for xxhash
+    implementation 'org.lz4:lz4-java:1.8.0'
+
+    // kafka streams
+    implementation 'org.apache.kafka:kafka-streams'
+
+    // provides Redis integration
+    implementation("org.springframework.boot:spring-boot-starter-data-redis:4.0.0-M3")
+    // allows execution of plain queries against Redis
+    implementation("redis.clients:jedis:7.0.0")
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.25.3'
+    }
+}
+
+// needed for protobuf
+sourceSets {
+    main {
+        java {
+            srcDir "$projectDir/src/generated/main/java"
+        }
+    }
+}
+
+tasks.named('bootBuildImage') {
+	runImage = 'paketobuildpacks/ubuntu-noble-run-base:latest'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

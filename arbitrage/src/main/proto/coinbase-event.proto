@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package coinbase.ticker;
+
+// All of the prices are stored in int64 after being multiplied by 10^8
+// This is done to avoid string conversions which are slower with bigger memory footprint
+// Ingestor -> sets best_bid_price * 10^8 -> then the processor will divide by 10^8 to get the real price
+message CoinbaseTicker {
+  string crypto_pair = 1; // crypto pair
+  int64 best_bid = 2; // highest buy price (what you can sell for), scale 2
+  int64 best_ask = 3; // lowest price (what you need to pay to buy), scale 2
+  int64 price = 4; // current market price, scale 2
+  int64 best_bid_quantity = 5; // scale 8
+  int64 best_ask_quantity = 6; // there two are needed for liquidity, scale 8
+  string event_time = 7; // timestamp for when the event happened in the Coinbase system
+  string timestamp = 8; // When the event was created in our system, ISO8601 format
+  int32 message_id = 9; // Unique identifier (UUID)
+  int32 price_scale = 10;
+  int32 quantity_scale = 11;
+};
+
+/**
+       message PastedObject {
+          string type = 1;
+string product_id = 2;
+string price = 3;
+string volume_24_h = 4;
+string low_24_h = 5;
+string high_24_h = 6;
+string low_52_w = 7;
+string high_52_w = 8;
+string price_percent_chg_24_h = 9;
+string best_bid = 10;
+string best_ask = 11;
+string best_bid_quantity = 12;
+string best_ask_quantity = 13;
+       }
+ */
