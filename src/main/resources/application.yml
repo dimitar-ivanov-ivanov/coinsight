@@ -22,6 +22,7 @@ server:
 kafka:
   binance:
     topic: binance-topic
+    latest: binance-latest-topic
     dlt:
       name: binance-dlt-topic
       group: binance-dlt-consumer-group
@@ -29,6 +30,7 @@ kafka:
       threads: 4
   coinbase:
     topic: coinbase-topic
+    latest: coinbase-latest-topic
     dlt:
       name: coinbase-dlt-topic
       group: coinbase-dlt-consumer-group
@@ -38,3 +40,8 @@ kafka:
     topic: monitor-topic
     dlt:
       name: monitor-dlt-topic
+  streams:
+    binance:
+      applicationId: binance-stream
+      commitInterval: 500
+      gracePeriod: 1000
