@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@SuppressWarnings({"PMD.ExcessiveImports", "PMD.TooManyMethods", "PMD.UseUnderscoresInNumericLiterals"})
+@SuppressWarnings({"PMD.ExcessiveImports", "PMD.UseUnderscoresInNumericLiterals"})
 class BinanceIntegrationTest {
 
     private static final String BINANCE_TOPIC = "binance-topic";
