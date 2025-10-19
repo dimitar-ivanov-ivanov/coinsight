@@ -24,7 +24,7 @@ public class BinanceProcessor extends ExchangeProcessor<BinanceTickerOuterClass.
     @Autowired
     private KafkaTemplate<String, String> binanceDltTemplate;
 
-    @Value("${kafka.binance.dlt.name}")
+    @Value("${kafka.binance.dlt.topic}")
     private String binanceDeadLetterTopic;
 
     @Override

@@ -5,6 +5,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.Suppressed;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +20,7 @@ public class BinanceStream {
     @Value("${kafka.binance.topic}")
     private String input;
 
-    @Value("${kafka.binance.latest}")
+    @Value("${kafka.binance.latest.topic}")
     private String output;
 
     @Value("${kafka.streams.binance.commitInterval}")
@@ -42,6 +43,7 @@ public class BinanceStream {
         builder.stream(input, Consumed.with(Serdes.String(), serde))
                 .groupByKey()
                 .windowedBy(window)
+                // Take the last value in the given window
                 .reduce((oldVal, newVal) -> newVal)
                 .toStream()
                 .selectKey((windowedKey, val) -> windowedKey.key())

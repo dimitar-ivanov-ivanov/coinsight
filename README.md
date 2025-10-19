@@ -102,6 +102,8 @@ will push to the event storage table in TimeScaleDB.
     - create coinbase topic with 1 minute retention
 - [TOPIC CREATION] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --create --topic monitor-topic --bootstrap-server coinsight-broker-1:19092 --partitions 16 --replication-factor 2 --config retention.ms=60000 --config segment.ms=300000``
     - create monitoring topic with 1 minute retention
+- [TOPIC CREATION] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --create --topic binance-latest-topic --bootstrap-server coinsight-broker-1:19092 --partitions 10 --replication-factor 2 --config retention.ms=60000 --config segment.ms=300000``
+    - create binance latest topic with 1 minute retention 
 - [TOPIC CREATION] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --create --topic binance-dlt-topic --bootstrap-server coinsight-broker-1:19092 --partitions 2 --replication-factor 2 --config retention.ms=259200000``
     - create binance dlt topic with 3 day retention
 - [TOPIC CREATION] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --create --topic coinbase-dlt-topic --bootstrap-server coinsight-broker-1:19092 --partitions 2 --replication-factor 2 --config retention.ms=259200000``

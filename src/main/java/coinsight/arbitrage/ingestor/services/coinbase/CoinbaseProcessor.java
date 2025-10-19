@@ -24,7 +24,7 @@ public class CoinbaseProcessor extends ExchangeProcessor<CoinbaseEvent.CoinbaseT
     @Autowired
     private KafkaTemplate<String, String> coinbaseDltTemplate;
 
-    @Value("${kafka.coinbase.dlt.name}")
+    @Value("${kafka.coinbase.dlt.topic}")
     private String coinbaseDeadLetterTopic;
 
     @Override

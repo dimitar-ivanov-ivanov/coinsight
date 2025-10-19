@@ -2,6 +2,7 @@ package coinsight.arbitrage;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.annotation.EnableKafkaStreams;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -9,6 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SuppressWarnings("PMD")
 @EnableScheduling
 @EnableKafkaStreams
+@EnableKafka
 public class ArbitrageApplication {
 
     public static void main(String[] args) {

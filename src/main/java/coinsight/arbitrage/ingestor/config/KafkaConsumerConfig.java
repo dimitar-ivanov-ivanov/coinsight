@@ -20,26 +20,26 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Value("${kafka.binance.dlt.name}")
+    @Value("${kafka.binance.dlt.group}")
     private String binanceDltGroup;
 
-    @Value("${kafka.coinbase.dlt.name}")
+    @Value("${kafka.coinbase.dlt.group}")
     private String coinbaseDltGroup;
 
-    @Value("${kafka.binance.dlt.threads}")
-    private int binanceDltThreads;
+    @Value("${kafka.binance.dlt.consumers}")
+    private int binanceConsumers;
 
-    @Value("${kafka.coinbase.dlt.threads}")
-    private int coinbaseDltThreads;
+    @Value("${kafka.coinbase.dlt.consumers}")
+    private int coinbaseConsumers;
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> binanceDltListenerContainerFactory() {
-        return createContainerFactory(binanceDltGroup, binanceDltThreads);
+        return createContainerFactory(binanceDltGroup, binanceConsumers);
     }
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> coinbaseDltListenerContainerFactory() {
-        return createContainerFactory(coinbaseDltGroup, coinbaseDltThreads);
+        return createContainerFactory(coinbaseDltGroup, coinbaseConsumers);
     }
 
     private ConcurrentKafkaListenerContainerFactory<String, String> createContainerFactory(String group, int threads) {

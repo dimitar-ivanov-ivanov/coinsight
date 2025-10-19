@@ -24,7 +24,7 @@ public class MonitoringService {
     @Value("${kafka.monitoring.topic}")
     private String monitoringTopic;
 
-    @Value("${kafka.monitoring.dlt.name}")
+    @Value("${kafka.monitoring.dlt.topic}")
     private String dltMonitoringTopic;
 
     /**

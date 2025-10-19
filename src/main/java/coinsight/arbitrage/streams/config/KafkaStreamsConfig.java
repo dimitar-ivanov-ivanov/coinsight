@@ -26,6 +26,9 @@ public class KafkaStreamsConfig {
     @Value("${kafka.streams.binance.commitInterval}")
     private Integer commitInterval;
 
+    @Value("${kafka.binance.latest.consumers}")
+    private Integer streamThreads;
+
     @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
     public KafkaStreamsConfiguration binanceStreamConfig() {
         Map<String, Object> props = new HashMap<>();
@@ -39,6 +42,7 @@ public class KafkaStreamsConfig {
         // we output the last event in the window to the output topic
         // Doing this makes sure that the data isn't always chaging, changes every 300-400 millis to make sure the human eye can track it
         props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, commitInterval);
+        props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, streamThreads);
         return new KafkaStreamsConfiguration(props);
     }
 }

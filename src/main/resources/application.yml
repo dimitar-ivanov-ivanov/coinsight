@@ -22,26 +22,37 @@ server:
 kafka:
   binance:
     topic: binance-topic
-    latest: binance-latest-topic
+    latest:
+      topic: binance-latest-topic
+      group: binance-latest-group
+      consumers: 10
     dlt:
-      name: binance-dlt-topic
+      topic: binance-dlt-topic
       group: binance-dlt-consumer-group
       enabled: false
-      threads: 4
+      consumers: 2
   coinbase:
     topic: coinbase-topic
-    latest: coinbase-latest-topic
+    latest:
+      topic: coinbase-latest-topic
+      group: coinbase-latest-group
+      consumers: 10
     dlt:
-      name: coinbase-dlt-topic
+      topic: coinbase-dlt-topic
       group: coinbase-dlt-consumer-group
       enabled: false
-      threads: 4
+      consumers: 2
   monitoring:
     topic: monitor-topic
     dlt:
-      name: monitor-dlt-topic
+      topic: monitor-dlt-topic
   streams:
     binance:
       applicationId: binance-stream
       commitInterval: 500
       gracePeriod: 1000
+
+#logging:
+#  level:
+#    org.springframework.kafka: DEBUG
+#    org.apache.kafka.clients.consumer: DEBUG
