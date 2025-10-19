@@ -122,6 +122,18 @@ will push to the event storage table in TimeScaleDB.
 - ``kafka-console-consumer --bootstrap-server coinsight-broker-1:19092 --topic read-topic --property print.key=true --property print.timestamp=true --property print.partition=true --from-beginning``
 - OR ``docker exec coinsight-broker-1 kafka-console-consumer --bootstrap-server coinsight-broker-1:19092 --topic binance-topic --property print.key=true --property print.timestamp=true --property print.partition=true --from-beginning``
 
+# Redis 
+- I'm using Redis for two use cases
+  - Distributed lock for the input of events. When we scale to 2+ instances of the app we'll also scale to 2+ input sockets of events.
+    That would mean that we would duplicate events. Regardless of how many instance we have we need to make sure only one event comes in.
+    The way we ensure is that is through a distributed lock. There's a job that runs and tries to take/maintain the ownership of the current instance.
+    If the instance dies the job doesn't run and the instance loses ownership, meaning the other active instance will take ownershup.
+  - Idempotency records. For the Binance/Coinbase consumer I need very fast idempotency checks. Redis is the right tool for that. I'm purpossfully using integer(hash) for the key 
+    and another integer(default 1) for the value, to signify that the value is written. Managed to lower the needed memory to 50 bytes per record.
+- Connection pool
+  - I've configured this purposefully to max 30 connections. I have 2 consumers that have 10 threads + the leader election job.
+    So I have 9 connections buffer just in case. A misconfigured connection pool can become a single point of failure or slow things down A LOT! 
+
 # TimeScaleDB
 - One main instance that will be used for all traffic and a replica on standby to ensure availability.
 - For the event storage, when we write an event we know it won't be update we safely compress older data to save storage.

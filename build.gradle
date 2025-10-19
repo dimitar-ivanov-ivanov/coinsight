@@ -76,8 +76,15 @@ dependencies {
 
     // provides Redis integration
     implementation("org.springframework.boot:spring-boot-starter-data-redis:4.0.0-M3")
-    // allows execution of plain queries against Redis
-    implementation("redis.clients:jedis:7.0.0")
+
+    // Plain WebSocket support - this is all you need
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // For JSON processing
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    // For protobuf to JSON conversion
+    implementation 'com.google.protobuf:protobuf-java-util:4.32.1'
 }
 
 protobuf {

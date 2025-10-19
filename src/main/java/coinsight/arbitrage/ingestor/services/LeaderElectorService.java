@@ -20,7 +20,7 @@ public class LeaderElectorService {
     private volatile boolean isLeader = false;
 
     @Autowired
-    private RedisTemplate<String, String> redis;
+    private RedisTemplate<String, String> lockTemplate;
 
 
     public boolean isLeader() {
@@ -39,10 +39,10 @@ public class LeaderElectorService {
     @PostConstruct
     @Scheduled(fixedRate = 5000)
     private void maintainLeadership() {
-        redis.opsForValue()
+        lockTemplate.opsForValue()
                 .setIfAbsent(LEADER_KEY, INSTANCE_ID, Duration.ofSeconds(15));
 
-        String currentLeader = redis.opsForValue().get(LEADER_KEY);
+        String currentLeader = lockTemplate.opsForValue().get(LEADER_KEY);
         boolean shouldBeLeader = INSTANCE_ID.equals(currentLeader);
 
         if (shouldBeLeader && !isLeader) {
@@ -55,7 +55,7 @@ public class LeaderElectorService {
 
         // maintain leadership by renewing the lock
         if (isLeader) {
-            redis.expire(LEADER_KEY, Duration.ofSeconds(10));
+            lockTemplate.expire(LEADER_KEY, Duration.ofSeconds(10));
         }
     }
 }

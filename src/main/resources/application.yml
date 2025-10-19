@@ -12,9 +12,13 @@ spring:
     timeout: 6000
     lettuce:
       pool:
-        max-active: 10
-        max-idle: 5
-        min-idle: 2
+        # hard limit of connections
+        max-active: 30 # currently needs 21 (2 consumer + 1 job) but add more for buffer
+        # max idle connections (unsused but ready)
+        ## excess idle connections get closed to save resouces
+        max-idle: 15
+        # pool proactively creates connections to meet this minimum if not met
+        min-idle: 5 # maitain some baseline for a quick response
 
 server:
   port: 8080
@@ -52,6 +56,14 @@ kafka:
       commitInterval: 500
       gracePeriod: 1000
 
+
+redis:
+  binance:
+    idempotency:
+      ttl: 3600
+  coinbase:
+    idempotency:
+      ttl: 3600
 #logging:
 #  level:
 #    org.springframework.kafka: DEBUG

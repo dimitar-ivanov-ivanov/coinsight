@@ -3,8 +3,10 @@ package coinsight.arbitrage.shared.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericToStringSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 public class RedisConfig {
@@ -15,14 +17,39 @@ public class RedisConfig {
     @Value("${spring.redis.port}")
     private Integer port;
 
+    /**
+     * Used for latest consumer idempotency checks
+     * Check out: {@link coinsight.arbitrage.bff.consumer.BinanceLatestConsumer}
+     * @param connectionFactory connection factory
+     * @return integer redis template
+     */
+    // Used for latest consumer idempotency checks
     @Bean
-    public JedisPool jedisPool() {
-        JedisPoolConfig poolConfig = new JedisPoolConfig();
-        poolConfig.setMaxTotal(15); // max connections in the pool
+    public RedisTemplate<Integer, Integer> idempotencyTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<Integer, Integer> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new GenericToStringSerializer<>(Integer.class));
+        template.setValueSerializer(new GenericToStringSerializer<>(Integer.class));
+        template.setHashKeySerializer(new GenericToStringSerializer<>(Integer.class));
+        template.setHashValueSerializer(new GenericToStringSerializer<>(Integer.class));
+        template.afterPropertiesSet();
+        return template;
+    }
 
-        //String redisHost = "localhost"; // Assuming we're using Docker container
-        // If Spring app is inside docker the host would be "redis"
-        return new JedisPool(poolConfig, host, port);
+    /**
+     * Used for distributed locks in LeaderElectorService
+     * Check out: {@link coinsight.arbitrage.ingestor.services.LeaderElectorService}
+     * @param connectionFactory connection factory
+     * @return string redis template
+     */
+    @Bean
+    public RedisTemplate<String, String> lockTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
+        template.afterPropertiesSet();
+        return template;
     }
 }
 
