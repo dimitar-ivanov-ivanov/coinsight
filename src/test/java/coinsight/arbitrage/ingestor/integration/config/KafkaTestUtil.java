@@ -1,6 +1,6 @@
 package coinsight.arbitrage.ingestor.integration.config;
 
-import coinsight.arbitrage.util.ProtobufDeserializer;
+import coinsight.arbitrage.shared.util.ProtobufDeserializer;
 import monitor.MonitorEventOuterClass;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;

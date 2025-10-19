@@ -1,4 +1,4 @@
-package coinsight.arbitrage.util;
+package coinsight.arbitrage.shared.util;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;

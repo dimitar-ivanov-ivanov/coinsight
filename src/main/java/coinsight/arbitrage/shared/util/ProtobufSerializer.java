@@ -1,4 +1,4 @@
-package coinsight.arbitrage.util;
+package coinsight.arbitrage.shared.util;
 
 import org.apache.kafka.common.serialization.Serializer;
 

@@ -1,6 +1,6 @@
 package coinsight.arbitrage.bff.config;
 
-import coinsight.arbitrage.util.ProtobufDeserializer;
+import coinsight.arbitrage.shared.util.ProtobufDeserializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,6 +1,6 @@
 package coinsight.arbitrage.ingestor.util;
 
-import coinsight.arbitrage.util.MessageIdGenerator;
+import coinsight.arbitrage.shared.util.MessageIdGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

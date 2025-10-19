@@ -1,7 +1,7 @@
 package coinsight.arbitrage.ingestor.config;
 
 import coinbase.ticker.CoinbaseEvent;
-import coinsight.arbitrage.util.ProtobufSerializer;
+import coinsight.arbitrage.shared.util.ProtobufSerializer;
 import monitor.MonitorDtlEvent;
 import monitor.MonitorEventOuterClass;
 import org.apache.kafka.clients.producer.ProducerConfig;

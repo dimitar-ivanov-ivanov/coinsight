@@ -1,7 +1,7 @@
 package coinsight.arbitrage.streams.binance;
 
-import coinsight.arbitrage.util.ProtobufDeserializer;
-import coinsight.arbitrage.util.ProtobufSerializer;
+import coinsight.arbitrage.shared.util.ProtobufDeserializer;
+import coinsight.arbitrage.shared.util.ProtobufSerializer;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;

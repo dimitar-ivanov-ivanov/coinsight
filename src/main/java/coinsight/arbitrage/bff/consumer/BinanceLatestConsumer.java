@@ -1,17 +1,16 @@
 package coinsight.arbitrage.bff.consumer;
 
-import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import ticker.BinanceTickerOuterClass;
 
 @Service
 public class BinanceLatestConsumer {
-    
-    @PostConstruct
-    public void init() {
-        System.out.println("BinanceLatestConsumer bean created and initialized");
-    }
+
+    @Autowired
+    private RedisTemplate<String, String> redis;
 
     /**
      * Consumer for the latest binance events.

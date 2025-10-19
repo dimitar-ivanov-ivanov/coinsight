@@ -1,4 +1,4 @@
-package coinsight.arbitrage.util;
+package coinsight.arbitrage.shared.util;
 
 import net.jpountz.xxhash.XXHash32;
 import net.jpountz.xxhash.XXHashFactory;
