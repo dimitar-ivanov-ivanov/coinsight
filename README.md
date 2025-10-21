@@ -157,6 +157,11 @@ will push to the event storage table in TimeScaleDB.
 - Ingestor -> sets best_bid_price * 10^8 -> then the processor will divide by 10^8 to get the real price
 - The scales for prices will be put in the events too, so that if they change they have to only change in the ingestor app
 
+# Client Testing 
+- Run the client.js script in src/main/resources/static/client.js
+- install node and npm before
+- Run this ``node client.js`` after start the application
+
 # Startup
 - The environment variable "INSTANCE_ID=coinsight-ingestor-1" is expected on startup
     - used when publishing monitoring events 

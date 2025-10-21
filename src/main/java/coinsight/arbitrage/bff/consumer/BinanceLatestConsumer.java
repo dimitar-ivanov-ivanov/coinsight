@@ -1,9 +1,11 @@
 package coinsight.arbitrage.bff.consumer;
 
+import com.google.protobuf.util.JsonFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import ticker.BinanceTickerOuterClass;
 
@@ -16,6 +18,9 @@ public class BinanceLatestConsumer {
 
     @Autowired
     private RedisTemplate<Integer, Integer> idempotencyTemplate;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     @Value("${redis.binance.idempotency.ttl}")
     private Integer idempotencyTtlInSeconds;
@@ -43,7 +48,21 @@ public class BinanceLatestConsumer {
             return;
         }
 
-        System.out.println("Received event " + binanceTicker.getMessageId());
+        try {
+            // Convert Protobuf -> JSON
+            String json = JsonFormat.printer()
+                    .alwaysPrintFieldsWithNoPresence()
+                    .preservingProtoFieldNames()
+                    .print(binanceTicker);
+
+            // Send JSON through WebSocket
+            messagingTemplate.convertAndSend("/topic/binance", json);
+
+        } catch (Exception e) {
+            System.err.println("Failed to convert Protobuf to JSON: " + e.getMessage());
+        }
+
+        //System.out.println("Received event " + binanceTicker.getMessageId());
     }
 
     // Purposefully done in order to skip allocating/deallocating an extra object per event
