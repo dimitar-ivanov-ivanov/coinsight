@@ -3,7 +3,6 @@ package coinsight.arbitrage.bff.consumer;
 import com.google.protobuf.util.JsonFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -14,16 +13,8 @@ import java.time.Duration;
 @Service
 public class BinanceLatestConsumer {
 
-    private static final Integer KEY_EXISTS_FLAG = 1;
-
-    @Autowired
-    private RedisTemplate<Integer, Integer> idempotencyTemplate;
-
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
-
-    @Value("${redis.binance.idempotency.ttl}")
-    private Integer idempotencyTtlInSeconds;
 
     private Duration duration;
 
@@ -31,24 +22,16 @@ public class BinanceLatestConsumer {
      * Consumer for the latest binance events.
      * Responsible for emitting the value of the event to the customer UI.
      * The emitting would be done through an open socket.
+     * No idempotency check as the events come in so far even if there is a duplicate
+     * the clients won't notice.
      *
      * @param binanceTicker input event to process
      */
     @KafkaListener(topics = "binance-latest-topic",
             containerFactory = "binanceLatestListenerContainerFactory")
     public void processMessage(BinanceTickerOuterClass.BinanceTicker binanceTicker) {
-        int messageId = binanceTicker.getMessageId();
-
-        // idempotency check
-        Boolean wasAbsent = idempotencyTemplate.opsForValue()
-                .setIfAbsent(messageId, KEY_EXISTS_FLAG, getDuration());
-
-        if (!wasAbsent) {
-            System.out.println("Duplicate message detected, skipping: " + messageId);
-            return;
-        }
-
         try {
+            // TODO: Deal with prices and their scale, then parse to json
             // Convert Protobuf -> JSON
             String json = JsonFormat.printer()
                     .alwaysPrintFieldsWithNoPresence()
@@ -57,20 +40,8 @@ public class BinanceLatestConsumer {
 
             // Send JSON through WebSocket
             messagingTemplate.convertAndSend("/topic/binance", json);
-
         } catch (Exception e) {
-            System.err.println("Failed to convert Protobuf to JSON: " + e.getMessage());
+            // send monitoring event
         }
-
-        //System.out.println("Received event " + binanceTicker.getMessageId());
-    }
-
-    // Purposefully done in order to skip allocating/deallocating an extra object per event
-    private Duration getDuration() {
-        if (duration != null) {
-            return duration;
-        }
-        duration = Duration.ofSeconds(idempotencyTtlInSeconds);
-        return duration;
     }
 }

@@ -55,15 +55,6 @@ kafka:
       applicationId: binance-stream
       commitInterval: 500
       gracePeriod: 1000
-
-
-redis:
-  binance:
-    idempotency:
-      ttl: 3600
-  coinbase:
-    idempotency:
-      ttl: 3600
 #logging:
 #  level:
 #    org.springframework.kafka: DEBUG
