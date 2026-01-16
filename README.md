@@ -31,6 +31,11 @@ Each of these parts are in separate packages, they have no compile time dependen
       - OpenSeach
       - OpenSeach Dashboards
 
+# Coinsight Diagram
+Refer to "draw.excalidraw" file in /diagram.
+Drag and drop into https://excalidraw.com/ 
+Visualizing the diagram here was too complex.
+
 # Coinsight Ingestor
 This app is used for consuming messages from Crypto Exchanges through a WebSocket.
 It's responsibility is to convert those messages to Protobuf and then publish them to a dedicated Kafka topic per exchange.
