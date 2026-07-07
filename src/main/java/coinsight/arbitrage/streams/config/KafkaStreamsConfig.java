@@ -40,7 +40,7 @@ public class KafkaStreamsConfig {
         // processor node whenever the earliest of commit.interval.ms or statestore.cache.max.bytes (cache pressure)
         // The idea is to buffer events per key in a intermediary topic and then after the window "commitInterval" passes
         // we output the last event in the window to the output topic
-        // Doing this makes sure that the data isn't always chaging, changes every 300-400 millis to make sure the human eye can track it
+        // Doing this makes sure that the data isn't always changing, changes every 300-400 millis to make sure the human eye can track it
         props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, commitInterval);
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, streamThreads);
         return new KafkaStreamsConfiguration(props);
