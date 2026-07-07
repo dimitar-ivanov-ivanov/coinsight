@@ -22,7 +22,6 @@ public class LeaderElectorService {
     @Autowired
     private RedisTemplate<String, String> lockTemplate;
 
-
     public boolean isLeader() {
         return isLeader;
     }

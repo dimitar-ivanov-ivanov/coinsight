@@ -92,52 +92,48 @@ The way events will be consumed by exchanges is again through socket, the differ
 will push to the event storage table in TimeScaleDB.
 
 # Kafka
-- 3 Controller-only nodes: Handle cluster coordination, metadata, leader elections
-- 2 Broker-only nodes: Handle all message traffic (produce/consume)
-- Separation of concerns: Controllers don't handle messages, brokers don't handle coordination
+- 3 combined broker+controller nodes (KRaft, combined mode): each node participates in the Raft metadata quorum (controller role) AND serves message traffic (broker role)
+- 3 is the minimum node count for the Raft quorum to tolerate 1 node failure (majority = 2 of 3)
+- Combining roles instead of running dedicated controller-only nodes keeps the same HA guarantee with fewer containers, and gives replicated topics more brokers to place replicas on
 - For every event we retrieve from any exchange we publish to the topic of that exchange
 - For every log instead of logging and blocking the flow we publish an event to the monitor topic
 - For the sake of saving $ I'm making the retention of the generally used topics to be **1 MINUTE!**
 - The DLT topics will have a retention of 3 days, meaning I have 3 days to fix the broken logic and then re-enable the DLT consumer which re-emits the messages to the original topic
 - The other topics will be created by the Apps that will use them
 - [START] ``docker compose up -d``
-- [TOPIC CREATION] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --create --topic binance-topic --bootstrap-server coinsight-broker-1:19092 --partitions 10 --replication-factor 2 --config retention.ms=60000 --config segment.ms=300000``
+- [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic binance-topic --bootstrap-server broker1:19092 --partitions 10 --replication-factor 3 --config retention.ms=60000 --config segment.ms=300000``
     - create binance topic with 1 minute retention, segment rolls at 5 min so after 5 min a new segment is created and the old one can have its messages deleted
-- [TOPIC CREATION] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --create --topic coinbase-topic --bootstrap-server coinsight-broker-1:19092 --partitions 10 --replication-factor 2 --config retention.ms=60000 --config segment.ms=300000``
+    - replication-factor is now 3 since all 3 nodes are full brokers (was 2 when only 2 nodes were broker-only)
+- [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic coinbase-topic --bootstrap-server broker1:19092 --partitions 10 --replication-factor 3 --config retention.ms=60000 --config segment.ms=300000``
     - create coinbase topic with 1 minute retention
-- [TOPIC CREATION] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --create --topic monitor-topic --bootstrap-server coinsight-broker-1:19092 --partitions 16 --replication-factor 2 --config retention.ms=60000 --config segment.ms=300000``
+- [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic monitor-topic --bootstrap-server broker1:19092 --partitions 16 --replication-factor 3 --config retention.ms=60000 --config segment.ms=300000``
     - create monitoring topic with 1 minute retention
-- [TOPIC CREATION] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --create --topic binance-latest-topic --bootstrap-server coinsight-broker-1:19092 --partitions 10 --replication-factor 2 --config retention.ms=60000 --config segment.ms=300000``
+- [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic binance-latest-topic --bootstrap-server broker1:19092 --partitions 10 --replication-factor 3 --config retention.ms=60000 --config segment.ms=300000``
     - create binance latest topic with 1 minute retention 
-- [TOPIC CREATION] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --create --topic binance-dlt-topic --bootstrap-server coinsight-broker-1:19092 --partitions 2 --replication-factor 2 --config retention.ms=259200000``
+- [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic binance-dlt-topic --bootstrap-server broker1:19092 --partitions 2 --replication-factor 3 --config retention.ms=259200000``
     - create binance dlt topic with 3 day retention
-- [TOPIC CREATION] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --create --topic coinbase-dlt-topic --bootstrap-server coinsight-broker-1:19092 --partitions 2 --replication-factor 2 --config retention.ms=259200000``
+- [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic coinbase-dlt-topic --bootstrap-server broker1:19092 --partitions 2 --replication-factor 3 --config retention.ms=259200000``
     - create coinbase dlt topic with 3 day retention
-- [TOPIC CREATION] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --create --topic monitor-dlt-topic --bootstrap-server coinsight-broker-1:19092 --partitions 2 --replication-factor 2 --config retention.ms=259200000``
+- [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic monitor-dlt-topic --bootstrap-server broker1:19092 --partitions 2 --replication-factor 3 --config retention.ms=259200000``
     - create binance dlt topic with 3 day retention
-- [VERIFY] ``docker exec coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server coinsight-broker-1:19092``
-- [TOPIC DELETION] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --delete --topic binance-topic --bootstrap-server coinsight-broker-1:19092``
+- [VERIFY] ``docker exec broker1 /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server broker1:19092``
+- [TOPIC DELETION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --delete --topic binance-topic --bootstrap-server broker1:19092``
 - [END] ``docker compose down``
-- [REMOVE VOLUMES] ``docker volume rm coinsight-ingestor_broker1-data coinsight-ingestor_broker2-data coinsight-ingestor_controller1-data coinsight-ingestor_controller2-data coinsight-ingestor_controller3-data``
-- [ALTER PARTITIONS ON TOPIC] ``docker exec -it coinsight-broker-1 /opt/kafka/bin/kafka-topics.sh --alter --topic binance-topic --partitions 10 --bootstrap-server coinsight-broker-1:19092,coinsight-broker-2:19093``
+- [REMOVE VOLUMES] ``docker volume rm broker1-data broker2-data broker3-data``
+- [ALTER PARTITIONS ON TOPIC] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --alter --topic binance-topic --partitions 10 --bootstrap-server broker1:19092,broker2:19093,broker3:19094``
   - Keep in mind in Kafka you can only **increase** partitions  
 - **[VERIFY EVENTS PRODUCED FOR TOPIC]**
-- ``docker exec -it coinsight-broker-1 bash``
+- ``docker exec -it broker1 bash``
 - ``cd ../../bin`` -> folder with scripts
-- ``kafka-console-consumer --bootstrap-server coinsight-broker-1:19092 --topic read-topic --property print.key=true --property print.timestamp=true --property print.partition=true --from-beginning``
-- OR ``docker exec coinsight-broker-1 kafka-console-consumer --bootstrap-server coinsight-broker-1:19092 --topic binance-topic --property print.key=true --property print.timestamp=true --property print.partition=true --from-beginning``
+- ``kafka-console-consumer --bootstrap-server broker1:19092 --topic read-topic --property print.key=true --property print.timestamp=true --property print.partition=true --from-beginning``
+- OR ``docker exec broker1 kafka-console-consumer --bootstrap-server broker1:19092 --topic binance-topic --property print.key=true --property print.timestamp=true --property print.partition=true --from-beginning``
 
 # Redis 
-- I'm using Redis for two use cases
+- I'm using Redis for this use cases
   - Distributed lock for the input of events. When we scale to 2+ instances of the app we'll also scale to 2+ input sockets of events.
     That would mean that we would duplicate events. Regardless of how many instance we have we need to make sure only one event comes in.
     The way we ensure is that is through a distributed lock. There's a job that runs and tries to take/maintain the ownership of the current instance.
     If the instance dies the job doesn't run and the instance loses ownership, meaning the other active instance will take ownershup.
-  - Idempotency records. For the Binance/Coinbase consumer I need very fast idempotency checks. Redis is the right tool for that. I'm purpossfully using integer(hash) for the key 
-    and another integer(default 1) for the value, to signify that the value is written. Managed to lower the needed memory to 50 bytes per record.
-- Connection pool
-  - I've configured this purposefully to max 30 connections. I have 2 consumers that have 10 threads + the leader election job.
-    So I have 9 connections buffer just in case. A misconfigured connection pool can become a single point of failure or slow things down A LOT! 
 
 # TimeScaleDB
 - One main instance that will be used for all traffic and a replica on standby to ensure availability.
@@ -166,6 +162,14 @@ will push to the event storage table in TimeScaleDB.
 - Run the client.js script in src/main/resources/static/client.js
 - install node and npm before
 - Run this ``node client.js`` after start the application
+
+# Docker problems (Windows)
+ - If you have problems with ports, use the commands belows
+ - ``net stop winnat``
+ - ``net start winnat``
+
+# Redis Insight (local testing) 
+ - Connect to the Redis container using ``redis://redis:6379``
 
 # Startup
 - The environment variable "INSTANCE_ID=coinsight-ingestor-1" is expected on startup
