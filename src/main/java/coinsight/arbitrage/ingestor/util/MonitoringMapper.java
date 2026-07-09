@@ -1,10 +1,11 @@
 package coinsight.arbitrage.ingestor.util;
 
-import monitor.MonitorEventOuterClass;
+import coinsight.arbitrage.shared.model.MonitorEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 import static coinsight.arbitrage.ingestor.util.LeaderUtil.HOSTNAME;
@@ -21,23 +22,24 @@ public class MonitoringMapper {
 
     /**
      * Mapper which converts input message and severity level to a monitoring event.
-     * The chosen format of the event is Protobuf.
+     * Published as plain JSON - see {@link MonitorEvent} for why.
      *
      * @param message input message
      * @param level input severity level
-     * @return a monitoring event using protobuf
+     * @return a monitoring event
      */
-    public MonitorEventOuterClass.MonitorEvent toMonitoringEvent(String message, String level) {
-        return MonitorEventOuterClass.MonitorEvent.newBuilder()
-            .setMessage(message)
-            .setTimestamp(Instant.now().toString())
-            .setMessageId(UUID.randomUUID().toString())
-            .setLevel(level)
-            .setServiceName(serviceName)
-            .setInstanceId(INSTANCE_ID)
-            .setTraceId(UUID.randomUUID().toString())
-            .setHost(HOSTNAME)
-            .setEnvironment(environment)
-            .build();
+    public MonitorEvent toMonitoringEvent(String message, String level) {
+        return new MonitorEvent(
+            message,
+            Instant.now().toString(),
+            UUID.randomUUID().toString(),
+            level,
+            serviceName,
+            INSTANCE_ID,
+            UUID.randomUUID().toString(),
+            Map.of(),
+            HOSTNAME,
+            environment
+        );
     }
 }

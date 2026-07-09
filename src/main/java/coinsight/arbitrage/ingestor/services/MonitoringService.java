@@ -2,12 +2,14 @@ package coinsight.arbitrage.ingestor.services;
 
 import ch.qos.logback.core.util.StringUtil;
 import coinsight.arbitrage.ingestor.util.MonitoringMapper;
-import monitor.MonitorDtlEvent;
-import monitor.MonitorEventOuterClass;
+import coinsight.arbitrage.shared.model.DltEvent;
+import coinsight.arbitrage.shared.model.MonitorEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Service
 public class MonitoringService {
@@ -16,10 +18,10 @@ public class MonitoringService {
     private MonitoringMapper monitoringMapper;
 
     @Autowired
-    private KafkaTemplate<String, MonitorEventOuterClass.MonitorEvent> monitoringTemplate;
+    private KafkaTemplate<String, MonitorEvent> monitoringTemplate;
 
     @Autowired
-    private KafkaTemplate<String, MonitorDtlEvent.DltEvent> monitoringDltTemplate;
+    private KafkaTemplate<String, DltEvent> monitoringDltTemplate;
 
     @Value("${kafka.monitoring.topic}")
     private String monitoringTopic;
@@ -29,7 +31,7 @@ public class MonitoringService {
 
     /**
      * Method responsible for taking raw message and level and publishing a Kafka event
-     * in protobuf format to the designated topic.
+     * in JSON format to the designated topic.
      *
      * @param message input raw message
      * @param severityLevel input severity level
@@ -40,19 +42,18 @@ public class MonitoringService {
         }
 
         try {
-            MonitorEventOuterClass.MonitorEvent monitoringEvent =
-                monitoringMapper.toMonitoringEvent(message, severityLevel);
-            monitoringTemplate.send(monitoringTopic, monitoringEvent.getMessageId(), monitoringEvent);
+            MonitorEvent monitoringEvent = monitoringMapper.toMonitoringEvent(message, severityLevel);
+            monitoringTemplate.send(monitoringTopic, monitoringEvent.messageId(), monitoringEvent);
         } catch (Exception ex) {
             // publish raw to DLT
-            MonitorDtlEvent.DltEvent dltEvent = MonitorDtlEvent.DltEvent.newBuilder()
-                .setMessage(message)
-                .setSeverityLevel(severityLevel)
-                .setTimestamp(System.currentTimeMillis())
-                .setErrorReason(null == ex.getMessage() ? "Error" : ex.getMessage())
-                .build();
+            DltEvent dltEvent = new DltEvent(
+                message,
+                severityLevel,
+                System.currentTimeMillis(),
+                null == ex.getMessage() ? "Error" : ex.getMessage(),
+                UUID.randomUUID().toString()
+            );
             monitoringDltTemplate.send(dltMonitoringTopic, dltEvent);
         }
     }
 }
-

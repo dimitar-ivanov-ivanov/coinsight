@@ -27,9 +27,9 @@ Each of these parts are in separate packages, they have no compile time dependen
     - Redis Insight (Monitoring for Redis)
     - TigerData (aka TimeScaleDB)
     - Monitoring Stack 
-      - Vector
-      - OpenSeach
-      - OpenSeach Dashboards
+      - Vector (consumes monitor-topic from Kafka directly, no custom Java consumer)
+      - Loki (log storage, queried via LogQL)
+      - Grafana (dashboards/alerts, queries Loki)
 
 # Coinsight Diagram
 Refer to "draw.excalidraw" file in /diagram.
@@ -78,10 +78,6 @@ But before the data is send an idempotency check is executed to make sure that t
 The idempotency records are stored in Redis as it's faster and it stores its data in memory.
 If the record is present in Redis then it's been processed before.
 
-# Consight Monitor
-This part of the project is entirely responsible for pushing the monitoring events to Vector.
-The same strategy with sub-batches is applied here.
-
 # Consight Event Storage 
 It's good to have an event storage just in case I have to replay events. I'll be storing them in 
 TimeScaleDB and compressing them to lower memory requirements.
@@ -90,6 +86,17 @@ The event storage avoids Kafka as a single point of failure.
 There is a job (disabled by default) which aims to take the events from the DB and push them to the exchange topics, thus replaying them.
 The way events will be consumed by exchanges is again through socket, the difference is the sockets in **Ingestor** push to Kafka and these 
 will push to the event storage table in TimeScaleDB.
+
+# Monitoring
+Vector connects to Kafka directly as a consumer group member of `monitor-topic`, decodes the payload
+(see `docker/vector/vector.yaml`), reshapes it, and ships it to Loki.
+Loki stores the data and indexes it. Grafana is used as an UI for the indexed data.
+
+Monitoring events are published as JSON (via `ProtobufJsonSerializer`, using `monitor-event.proto`'s canonical JSON
+mapping), not binary protobuf like the exchange ticker topics. `monitor-topic` is low volume and exists to be read
+(Grafana, or `kafka-console-consumer` while debugging), so binary's size/speed advantage doesn't pay for itself here,
+and JSON means Vector can decode it with its built-in `json` codec - no compiled descriptor set to generate or keep
+in sync. `monitor-event.proto` is still the single source of truth for the shape of the data either way.
 
 # Kafka
 - 3 combined broker+controller nodes (KRaft, combined mode): each node participates in the Raft metadata quorum (controller role) AND serves message traffic (broker role)
@@ -157,6 +164,8 @@ will push to the event storage table in TimeScaleDB.
 - This is done to avoid string conversions which are slower with bigger memory footprint
 - Ingestor -> sets best_bid_price * 10^8 -> then the processor will divide by 10^8 to get the real price
 - The scales for prices will be put in the events too, so that if they change they have to only change in the ingestor app
+- Exception: `monitor-topic`/`monitor-dlt-topic` publish the protobuf message as JSON instead of binary (see `ProtobufJsonSerializer`
+  and the **Monitoring** section above) - the schema is still defined in `.proto`, only the wire format differs
 
 # Client Testing 
 - Run the client.js script in src/main/resources/static/client.js

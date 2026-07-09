@@ -1,0 +1,54 @@
+# Vector pipeline: monitor-topic (Kafka) -> Loki
+#
+# Modules publish MonitorEvent as JSON (see ProtobufJsonSerializer) - protobuf's binary
+# wire format was overkill here: monitor-topic is low volume, human-facing (Grafana,
+# kafka-console-consumer while debugging), and monitor-event.proto stays the single
+# source of truth for the shape either way. Using JSON means Vector's built-in json
+# codec can decode it directly, with no compiled descriptor set to generate or keep
+# in sync.
+
+sources:
+  monitor_events:
+    type: kafka
+    bootstrap_servers: "broker1:19092,broker2:19093,broker3:19094"
+    group_id: "vector-monitor-consumer"
+    topics: ["monitor-topic"]
+    decoding:
+      codec: json
+
+transforms:
+  # Reshape the decoded MonitorEvent into the fields Loki should index as labels
+  # (service_name, level, environment) vs. everything else, which stays as part
+  # of the log line and is only searchable via LogQL at query time.
+  reshape_monitor_events:
+    type: remap
+    inputs: ["monitor_events"]
+    source: |
+      . = {
+        "message": .message,
+        "timestamp": .timestamp,
+        "message_id": .message_id,
+        "level": .level,
+        "service_name": .service_name,
+        "instance_id": .instance_id,
+        "trace_id": .trace_id,
+        "host": .host,
+        "environment": .environment,
+        "metadata": .metadata
+      }
+
+sinks:
+  loki:
+    type: loki
+    inputs: ["reshape_monitor_events"]
+    endpoint: "http://loki:3100"
+    encoding:
+      codec: json
+    out_of_order_action: accept
+    # Keep the label set small - Loki indexes labels, everything else in the
+    # log line is parsed at query time via LogQL. High-cardinality fields like
+    # message_id or trace_id must NOT become labels.
+    labels:
+      service_name: "{{ service_name }}"
+      level: "{{ level }}"
+      environment: "{{ environment }}"
