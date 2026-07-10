@@ -1,11 +1,14 @@
 # Vector pipeline: monitor-topic (Kafka) -> Loki
 #
-# Modules publish MonitorEvent as JSON (see ProtobufJsonSerializer) - protobuf's binary
-# wire format was overkill here: monitor-topic is low volume, human-facing (Grafana,
-# kafka-console-consumer while debugging), and monitor-event.proto stays the single
-# source of truth for the shape either way. Using JSON means Vector's built-in json
-# codec can decode it directly, with no compiled descriptor set to generate or keep
-# in sync.
+# Modules publish MonitorEvent/DltEvent as plain JSON (Spring Kafka's JsonSerializer,
+# see coinsight.arbitrage.shared.model) - no protobuf, no compiled descriptor set to
+# generate or keep in sync. Vector's built-in json codec decodes it directly.
+#
+# NOTE: the source object's field names below are whatever Jackson's default naming
+# produces for the Java record fields (camelCase: messageId, serviceName, instanceId,
+# traceId), NOT snake_case - that only mattered when this went through protobuf's JSON
+# mapping. The output key names on the left (message_id, service_name, ...) are just
+# this transform's own choice of shape and unrelated to the source casing.
 
 sources:
   monitor_events:
@@ -27,11 +30,11 @@ transforms:
       . = {
         "message": .message,
         "timestamp": .timestamp,
-        "message_id": .message_id,
+        "message_id": .messageId,
         "level": .level,
-        "service_name": .service_name,
-        "instance_id": .instance_id,
-        "trace_id": .trace_id,
+        "service_name": .serviceName,
+        "instance_id": .instanceId,
+        "trace_id": .traceId,
         "host": .host,
         "environment": .environment,
         "metadata": .metadata
