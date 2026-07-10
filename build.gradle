@@ -82,9 +82,6 @@ dependencies {
 
     // For JSON processing
     implementation 'com.fasterxml.jackson.core:jackson-databind'
-
-    // For protobuf to JSON conversion
-    implementation 'com.google.protobuf:protobuf-java-util:4.32.1'
 }
 
 protobuf {

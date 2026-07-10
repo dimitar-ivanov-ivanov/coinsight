@@ -92,11 +92,10 @@ Vector connects to Kafka directly as a consumer group member of `monitor-topic`,
 (see `docker/vector/vector.yaml`), reshapes it, and ships it to Loki.
 Loki stores the data and indexes it. Grafana is used as an UI for the indexed data.
 
-Monitoring events are published as JSON (via `ProtobufJsonSerializer`, using `monitor-event.proto`'s canonical JSON
-mapping), not binary protobuf like the exchange ticker topics. `monitor-topic` is low volume and exists to be read
-(Grafana, or `kafka-console-consumer` while debugging), so binary's size/speed advantage doesn't pay for itself here,
-and JSON means Vector can decode it with its built-in `json` codec - no compiled descriptor set to generate or keep
-in sync. `monitor-event.proto` is still the single source of truth for the shape of the data either way.
+Monitoring events (`MonitorEvent`/`DltEvent` in `coinsight.arbitrage.shared.model`) are plain Java records, published
+as JSON via Spring Kafka's built-in `JsonSerializer`. `monitor-topic` is low volume and exists to be read (Grafana, or `kafka-console-consumer` while debugging).
+
+Local Grafana testing requires admin/admin as credentials.
 
 # Kafka
 - 3 combined broker+controller nodes (KRaft, combined mode): each node participates in the Raft metadata quorum (controller role) AND serves message traffic (broker role)
@@ -164,8 +163,7 @@ in sync. `monitor-event.proto` is still the single source of truth for the shape
 - This is done to avoid string conversions which are slower with bigger memory footprint
 - Ingestor -> sets best_bid_price * 10^8 -> then the processor will divide by 10^8 to get the real price
 - The scales for prices will be put in the events too, so that if they change they have to only change in the ingestor app
-- Exception: `monitor-topic`/`monitor-dlt-topic` publish the protobuf message as JSON instead of binary (see `ProtobufJsonSerializer`
-  and the **Monitoring** section above) - the schema is still defined in `.proto`, only the wire format differs
+- Exception: `monitor-topic`/`monitor-dlt-topic` events are NOT protobuf - they're plain JSON records, see **Monitoring** above
 
 # Client Testing 
 - Run the client.js script in src/main/resources/static/client.js
@@ -179,7 +177,3 @@ in sync. `monitor-event.proto` is still the single source of truth for the shape
 
 # Redis Insight (local testing) 
  - Connect to the Redis container using ``redis://redis:6379``
-
-# Startup
-- The environment variable "INSTANCE_ID=coinsight-ingestor-1" is expected on startup
-    - used when publishing monitoring events 
