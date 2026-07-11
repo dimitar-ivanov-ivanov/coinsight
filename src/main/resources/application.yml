@@ -49,11 +49,9 @@ kafka:
   monitoring:
     topic: monitor-topic
   streams:
-    binance:
-      applicationId: binance-stream
-      commitInterval: 500
-      gracePeriod: 1000
-#logging:
-#  level:
-#    org.springframework.kafka: DEBUG
-#    org.apache.kafka.clients.consumer: DEBUG
+    # No separate applicationId/commitInterval here for the different streams
+    # setting - those are shared across the whole app (see KafkaStreamsConfig)
+    applicationId: arbitrage-stream
+    consumers: 20
+    commitInterval: 500
+    gracePeriod: 1000

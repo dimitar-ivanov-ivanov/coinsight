@@ -1,5 +1,6 @@
-package coinsight.arbitrage.streams.binance;
+package coinsight.arbitrage.streams.coinbase;
 
+import coinbase.ticker.CoinbaseEvent;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -13,17 +14,16 @@ import org.apache.kafka.streams.state.WindowStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ticker.BinanceTickerOuterClass;
 
 import java.time.Duration;
 
 @Component
-public class BinanceStream {
+public class CoinbaseStream {
 
-    @Value("${kafka.binance.topic}")
+    @Value("${kafka.coinbase.topic}")
     private String input;
 
-    @Value("${kafka.binance.latest.topic}")
+    @Value("${kafka.coinbase.latest.topic}")
     private String output;
 
     @Value("${kafka.streams.commitInterval}")
@@ -35,26 +35,26 @@ public class BinanceStream {
     private Integer gracePeriod;
 
     @Autowired
-    public void binanceStream(StreamsBuilder builder) {
+    public void coinbaseStream(StreamsBuilder builder) {
         TimeWindows window = TimeWindows.ofSizeAndGrace(
                 Duration.ofMillis(windowSize),
                 Duration.ofSeconds(gracePeriod));
 
-        Serde<BinanceTickerOuterClass.BinanceTicker> serde
-                = new BinanceTickerSerde();
+        Serde<CoinbaseEvent.CoinbaseTicker> serde
+                = new CoinbaseTickerSerde();
 
         builder.stream(input, Consumed.with(Serdes.String(), serde))
                 // Named explicitly (both here and in Materialized below) so the internal
                 // repartition/changelog topics Kafka Streams creates get human-readable names
-                // like "arbitrage-stream-binance-latest-reduce-store-changelog", instead of an
+                // like "arbitrage-stream-coinbase-latest-reduce-store-changelog", instead of an
                 // opaque auto-incrementing counter (...STATE-STORE-0000000001...) that gives no
                 // indication of which exchange's topology it belongs to
-                .groupByKey(Grouped.<String, BinanceTickerOuterClass.BinanceTicker>as("binance-ticker-grouped")
+                .groupByKey(Grouped.<String, CoinbaseEvent.CoinbaseTicker>as("coinbase-ticker-grouped")
                         .withKeySerde(Serdes.String())
                         .withValueSerde(serde))
                 .windowedBy(window)
                 .reduce((oldVal, newVal) -> newVal,
-                        Materialized.<String, BinanceTickerOuterClass.BinanceTicker, WindowStore<Bytes, byte[]>>as("binance-latest-reduce-store")
+                        Materialized.<String, CoinbaseEvent.CoinbaseTicker, WindowStore<Bytes, byte[]>>as("coinbase-latest-reduce-store")
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(serde))
                 .toStream()

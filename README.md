@@ -71,9 +71,15 @@ This is done because if I change the data all of the time the human eye won't be
 The Streams opens a intermediary topic in which we put all events for BTC-USDT(as an example) for the time window, at the end of the window the last event 
 is pushed to the output topic.
 
+Both Binance and Coinbase have their own topology (`BinanceStream`/`CoinbaseStream`), sharing one embedded Kafka Streams application/application.id
+(see `KafkaStreamsConfig`) rather than one each. Because of that, every serde is passed explicitly at each operator (`Consumed`/`Grouped`/`Materialized`/
+`Produced`) instead of relying on the app's default value serde - a single global default can't correctly serve two different ticker types at once, so
+neither topology depends on it.
+
 # Coinsight BFF
 When the user opens their mobile a socket is opened to the BFF.
-The BFF listens to the output topic and whatever comes through it is send through the socket to the client.
+The BFF listens to the output topics (`binance-latest-topic`/`coinbase-latest-topic`) and whatever comes through is sent through the socket to the client,
+on `/topic/binance` and `/topic/coinbase` respectively.
 But before the data is send an idempotency check is executed to make sure that the record hasn't been processed before.
 The idempotency records are stored in Redis as it's faster and it stores its data in memory.
 If the record is present in Redis then it's been processed before.
