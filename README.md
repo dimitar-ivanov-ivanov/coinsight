@@ -27,7 +27,7 @@ Each of these parts are in separate packages, they have no compile time dependen
     - Redis Insight (Monitoring for Redis)
     - TigerData (aka TimeScaleDB)
     - Monitoring Stack 
-      - Vector (consumes monitor-topic from Kafka directly, no custom Java consumer)
+      - Vector (log collector, consumes monitor-topic from Kafka directly, no custom Java consumer)
       - Loki (log storage, queried via LogQL)
       - Grafana (dashboards/alerts, queries Loki)
 
@@ -106,7 +106,7 @@ Local Grafana testing requires admin/admin as credentials.
 - For the sake of saving $ I'm making the retention of the generally used topics to be **1 MINUTE!**
 - The DLT topics will have a retention of 3 days, meaning I have 3 days to fix the broken logic and then re-enable the DLT consumer which re-emits the messages to the original topic
 - The other topics will be created by the Apps that will use them
-- [START] ``docker compose up -d``
+- [START] ``docker compose -f docker/docker-compose.yml up -d`` (or ``cd docker && docker compose up -d``)
 - [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic binance-topic --bootstrap-server broker1:19092 --partitions 10 --replication-factor 3 --config retention.ms=60000 --config segment.ms=300000``
     - create binance topic with 1 minute retention, segment rolls at 5 min so after 5 min a new segment is created and the old one can have its messages deleted
     - replication-factor is now 3 since all 3 nodes are full brokers (was 2 when only 2 nodes were broker-only)
@@ -122,7 +122,7 @@ Local Grafana testing requires admin/admin as credentials.
     - create coinbase dlt topic with 3 day retention
 - [VERIFY] ``docker exec broker1 /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server broker1:19092``
 - [TOPIC DELETION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --delete --topic binance-topic --bootstrap-server broker1:19092``
-- [END] ``docker compose down``
+- [END] ``docker compose -f docker/docker-compose.yml down``
 - [REMOVE VOLUMES] ``docker volume rm broker1-data broker2-data broker3-data``
 - [ALTER PARTITIONS ON TOPIC] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --alter --topic binance-topic --partitions 10 --bootstrap-server broker1:19092,broker2:19093,broker3:19094``
   - Keep in mind in Kafka you can only **increase** partitions  

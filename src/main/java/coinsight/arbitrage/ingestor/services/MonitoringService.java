@@ -28,6 +28,13 @@ public class MonitoringService {
      * Method responsible for taking raw message and level and publishing a Kafka event
      * in JSON format to the designated topic.
      *
+     * <p>The publish itself is non-blocking - {@code send()} returns as soon as the record
+     * is queued, before Kafka has actually confirmed delivery. The real success/failure
+     * outcome only becomes known later, asynchronously, when the returned future completes,
+     * so that's where the failure logging has to live - a try/catch around {@code send()}
+     * itself only ever sees synchronous failures (e.g. serialization), never a broker being
+     * unreachable or a delivery timeout.
+     *
      * @param message input raw message
      * @param severityLevel input severity level
      */
@@ -38,7 +45,13 @@ public class MonitoringService {
 
         try {
             MonitorEvent monitoringEvent = monitoringMapper.toMonitoringEvent(message, severityLevel);
-            monitoringTemplate.send(monitoringTopic, monitoringEvent.messageId(), monitoringEvent);
+            monitoringTemplate.send(monitoringTopic, monitoringEvent.messageId(), monitoringEvent)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.error("Failed to publish monitoring event to {}: [{}] {}",
+                                    monitoringTopic, severityLevel, message, ex);
+                        }
+                    });
         } catch (Exception ex) {
             log.error("Failed to publish monitoring event to {}: [{}] {}",
                     monitoringTopic, severityLevel, message, ex);
