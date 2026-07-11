@@ -2,17 +2,18 @@ package coinsight.arbitrage.ingestor.services;
 
 import ch.qos.logback.core.util.StringUtil;
 import coinsight.arbitrage.ingestor.util.MonitoringMapper;
-import coinsight.arbitrage.shared.model.DltEvent;
 import coinsight.arbitrage.shared.model.MonitorEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-
 @Service
 public class MonitoringService {
+
+    private static final Logger log = LoggerFactory.getLogger(MonitoringService.class);
 
     @Autowired
     private MonitoringMapper monitoringMapper;
@@ -20,14 +21,8 @@ public class MonitoringService {
     @Autowired
     private KafkaTemplate<String, MonitorEvent> monitoringTemplate;
 
-    @Autowired
-    private KafkaTemplate<String, DltEvent> monitoringDltTemplate;
-
     @Value("${kafka.monitoring.topic}")
     private String monitoringTopic;
-
-    @Value("${kafka.monitoring.dlt.topic}")
-    private String dltMonitoringTopic;
 
     /**
      * Method responsible for taking raw message and level and publishing a Kafka event
@@ -45,15 +40,8 @@ public class MonitoringService {
             MonitorEvent monitoringEvent = monitoringMapper.toMonitoringEvent(message, severityLevel);
             monitoringTemplate.send(monitoringTopic, monitoringEvent.messageId(), monitoringEvent);
         } catch (Exception ex) {
-            // publish raw to DLT
-            DltEvent dltEvent = new DltEvent(
-                message,
-                severityLevel,
-                System.currentTimeMillis(),
-                null == ex.getMessage() ? "Error" : ex.getMessage(),
-                UUID.randomUUID().toString()
-            );
-            monitoringDltTemplate.send(dltMonitoringTopic, dltEvent);
+            log.error("Failed to publish monitoring event to {}: [{}] {}",
+                    monitoringTopic, severityLevel, message, ex);
         }
     }
 }

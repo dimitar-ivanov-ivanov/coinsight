@@ -1,7 +1,6 @@
 package coinsight.arbitrage.ingestor.config;
 
 import coinbase.ticker.CoinbaseEvent;
-import coinsight.arbitrage.shared.model.DltEvent;
 import coinsight.arbitrage.shared.model.MonitorEvent;
 import coinsight.arbitrage.shared.util.ProtobufSerializer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -76,11 +75,6 @@ public class KafkaProducerConfig {
 
     @Bean
     public KafkaTemplate<String, MonitorEvent> monitoringTemplate() {
-        return new KafkaTemplate<>(jsonProducerFactory());
-    }
-
-    @Bean
-    public KafkaTemplate<String, DltEvent> monitoringDltTemplate() {
         return new KafkaTemplate<>(jsonProducerFactory());
     }
 }

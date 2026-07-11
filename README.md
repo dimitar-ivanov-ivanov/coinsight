@@ -92,7 +92,7 @@ Vector connects to Kafka directly as a consumer group member of `monitor-topic`,
 (see `docker/vector/vector.yaml`), reshapes it, and ships it to Loki.
 Loki stores the data and indexes it. Grafana is used as an UI for the indexed data.
 
-Monitoring events (`MonitorEvent`/`DltEvent` in `coinsight.arbitrage.shared.model`) are plain Java records, published
+Monitoring events (`MonitorEvent` in `coinsight.arbitrage.shared.model`) are plain Java records, published
 as JSON via Spring Kafka's built-in `JsonSerializer`. `monitor-topic` is low volume and exists to be read (Grafana, or `kafka-console-consumer` while debugging).
 
 Local Grafana testing requires admin/admin as credentials.
@@ -120,8 +120,6 @@ Local Grafana testing requires admin/admin as credentials.
     - create binance dlt topic with 3 day retention
 - [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic coinbase-dlt-topic --bootstrap-server broker1:19092 --partitions 2 --replication-factor 3 --config retention.ms=259200000``
     - create coinbase dlt topic with 3 day retention
-- [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic monitor-dlt-topic --bootstrap-server broker1:19092 --partitions 2 --replication-factor 3 --config retention.ms=259200000``
-    - create binance dlt topic with 3 day retention
 - [VERIFY] ``docker exec broker1 /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server broker1:19092``
 - [TOPIC DELETION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --delete --topic binance-topic --bootstrap-server broker1:19092``
 - [END] ``docker compose down``
@@ -163,7 +161,7 @@ Local Grafana testing requires admin/admin as credentials.
 - This is done to avoid string conversions which are slower with bigger memory footprint
 - Ingestor -> sets best_bid_price * 10^8 -> then the processor will divide by 10^8 to get the real price
 - The scales for prices will be put in the events too, so that if they change they have to only change in the ingestor app
-- Exception: `monitor-topic`/`monitor-dlt-topic` events are NOT protobuf - they're plain JSON records, see **Monitoring** above
+- Exception: `monitor-topic` events are NOT protobuf - they're plain JSON records, see **Monitoring** above
 
 # Client Testing 
 - Run the client.js script in src/main/resources/static/client.js

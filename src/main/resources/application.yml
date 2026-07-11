@@ -48,8 +48,6 @@ kafka:
       consumers: 2
   monitoring:
     topic: monitor-topic
-    dlt:
-      topic: monitor-dlt-topic
   streams:
     binance:
       applicationId: binance-stream
