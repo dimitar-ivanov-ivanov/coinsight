@@ -1,7 +1,7 @@
 package coinsight.arbitrage.ingestor.services.coinbase;
 
 import coinsight.arbitrage.ingestor.components.CoinbaseWebSocketClient;
-import coinsight.arbitrage.ingestor.services.MonitoringService;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -26,9 +26,9 @@ public class CoinbaseConnector {
     public void init() {
         try {
             client.connect();
-            monitoringService.publishEvent("Connecting to Coinbase WebSocket", "INFO");
+            monitoringService.publishEvent("Connecting to Coinbase WebSocket", "INFO", "ingestor");
         } catch (Exception e) {
-            monitoringService.publishEvent("Failed to initialize Coinbase WebSocket: " + e.getMessage(), "INFO");
+            monitoringService.publishEvent("Failed to initialize Coinbase WebSocket: " + e.getMessage(), "INFO", "ingestor");
         }
     }
 }

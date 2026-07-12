@@ -49,7 +49,7 @@ public class BinanceProcessor extends ExchangeProcessor<BinanceTickerOuterClass.
         BinanceTickerOuterClass.BinanceTicker ticker = binanceMapper.toBinanceTicker(message);
         if (ticker != null) {
             binanceTemplate.send(binanceTopic, ticker.getCryptoPair(), ticker);
-            monitoringService.publishEvent("Binance Published message " + ticker.getMessageId(), "INFO");
+            monitoringService.publishEvent("Binance Published message " + ticker.getMessageId(), "INFO", "ingestor");
         }
 
         return ticker;

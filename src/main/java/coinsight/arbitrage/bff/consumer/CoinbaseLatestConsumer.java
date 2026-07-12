@@ -1,6 +1,7 @@
 package coinsight.arbitrage.bff.consumer;
 
 import coinbase.ticker.CoinbaseEvent;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import com.google.protobuf.util.JsonFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -12,6 +13,9 @@ public class CoinbaseLatestConsumer {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private MonitoringService monitoringService;
 
     /**
      * Consumer for the latest coinbase events.
@@ -36,7 +40,8 @@ public class CoinbaseLatestConsumer {
             // Send JSON through WebSocket
             messagingTemplate.convertAndSend("/topic/coinbase", json);
         } catch (Exception e) {
-            // send monitoring event
+            monitoringService.publishEvent(
+                    "Failed to relay Coinbase ticker to client: " + e.getMessage(), "ERROR", "bff");
         }
     }
 }

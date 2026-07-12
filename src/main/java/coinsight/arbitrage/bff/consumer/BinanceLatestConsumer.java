@@ -1,5 +1,6 @@
 package coinsight.arbitrage.bff.consumer;
 
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import com.google.protobuf.util.JsonFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -12,6 +13,9 @@ public class BinanceLatestConsumer {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private MonitoringService monitoringService;
 
     /**
      * Consumer for the latest binance events.
@@ -36,7 +40,8 @@ public class BinanceLatestConsumer {
             // Send JSON through WebSocket
             messagingTemplate.convertAndSend("/topic/binance", json);
         } catch (Exception e) {
-            // send monitoring event
+            monitoringService.publishEvent(
+                    "Failed to relay Binance ticker to client: " + e.getMessage(), "ERROR", "bff");
         }
     }
 }

@@ -1,7 +1,7 @@
 package coinsight.arbitrage.ingestor.services.coinbase;
 
 import coinsight.arbitrage.ingestor.components.CoinbaseWebSocketClient;
-import coinsight.arbitrage.ingestor.services.MonitoringService;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -36,7 +36,7 @@ class CoinbaseConnectorTest {
 
         // THEN
         verify(client).connect();
-        verify(monitoringService).publishEvent("Connecting to Coinbase WebSocket", "INFO");
+        verify(monitoringService).publishEvent("Connecting to Coinbase WebSocket", "INFO", "ingestor");
     }
 
     @Test
@@ -50,6 +50,7 @@ class CoinbaseConnectorTest {
 
         // THEN
         verify(client).connect();
-        verify(monitoringService).publishEvent("Failed to initialize Coinbase WebSocket: " + ex.getMessage(), "INFO");
+        verify(monitoringService).publishEvent("Failed to initialize Coinbase WebSocket: " + ex.getMessage(),
+                "INFO", "ingestor");
     }
 }

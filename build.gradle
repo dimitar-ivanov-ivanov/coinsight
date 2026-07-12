@@ -65,9 +65,6 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka:3.3.4")
     implementation("io.confluent:kafka-protobuf-serializer:8.0.0")
 
-    // test container for Kafka
-    testImplementation("org.testcontainers:kafka:1.21.0")
-
     // use for xxhash
     implementation 'org.lz4:lz4-java:1.8.0'
 

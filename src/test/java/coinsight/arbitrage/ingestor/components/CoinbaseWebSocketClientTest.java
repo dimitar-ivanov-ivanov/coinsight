@@ -1,8 +1,8 @@
 package coinsight.arbitrage.ingestor.components;
 
 import coinsight.arbitrage.ingestor.services.LeaderElectorService;
-import coinsight.arbitrage.ingestor.services.MonitoringService;
 import coinsight.arbitrage.ingestor.services.coinbase.CoinbaseProcessor;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -45,7 +45,7 @@ class CoinbaseWebSocketClientTest {
         client.onOpen(null);
 
         // THEN
-        verify(monitoringService).publishEvent("Connected to Coinbase WebSocket", "INFO");
+        verify(monitoringService).publishEvent("Connected to Coinbase WebSocket", "INFO", "ingestor");
     }
 
     @Test
@@ -72,7 +72,7 @@ class CoinbaseWebSocketClientTest {
         client.onClose(code, reason, true);
 
         // THEN
-        verify(monitoringService).publishEvent(expectedMessage, "INFO");
+        verify(monitoringService).publishEvent(expectedMessage, "INFO", "ingestor");
         verifyNoInteractions(processor);
     }
 
@@ -87,6 +87,6 @@ class CoinbaseWebSocketClientTest {
 
         // THEN
         verifyNoInteractions(processor);
-        verify(monitoringService).publishEvent(expectedMessage, "ERROR");
+        verify(monitoringService).publishEvent(expectedMessage, "ERROR", "ingestor");
     }
 }

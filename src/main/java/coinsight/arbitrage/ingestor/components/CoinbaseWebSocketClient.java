@@ -1,8 +1,8 @@
 package coinsight.arbitrage.ingestor.components;
 
 import coinsight.arbitrage.ingestor.services.LeaderElectorService;
-import coinsight.arbitrage.ingestor.services.MonitoringService;
 import coinsight.arbitrage.ingestor.services.coinbase.CoinbaseProcessor;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +43,7 @@ public class CoinbaseWebSocketClient extends WebSocketClient {
     public void onOpen(ServerHandshake serverHandshake) {
         // send subscribe message
         send(buildSubscribeMessage());
-        monitoringService.publishEvent("Connected to Coinbase WebSocket", "INFO");
+        monitoringService.publishEvent("Connected to Coinbase WebSocket", "INFO", "ingestor");
     }
 
     @Override
@@ -56,12 +56,12 @@ public class CoinbaseWebSocketClient extends WebSocketClient {
     @Override
     public void onClose(int code, String reason, boolean remote) {
         String message = "Coinbase Connection closed" + reason + ", code:" + code;
-        monitoringService.publishEvent(message, "INFO");
+        monitoringService.publishEvent(message, "INFO", "ingestor");
     }
 
     @Override
     public void onError(Exception e) {
-        monitoringService.publishEvent("Coinbase WebSocket error: " + e.getMessage(), "ERROR");
+        monitoringService.publishEvent("Coinbase WebSocket error: " + e.getMessage(), "ERROR", "ingestor");
     }
 
     private String buildSubscribeMessage() {

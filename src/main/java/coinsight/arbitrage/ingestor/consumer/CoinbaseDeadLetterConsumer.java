@@ -1,8 +1,8 @@
 package coinsight.arbitrage.ingestor.consumer;
 
 import coinbase.ticker.CoinbaseEvent;
-import coinsight.arbitrage.ingestor.services.MonitoringService;
 import coinsight.arbitrage.ingestor.services.coinbase.CoinbaseProcessor;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -42,6 +42,6 @@ public class CoinbaseDeadLetterConsumer {
             severityLevel = "ERROR";
         }
 
-        monitoringService.publishEvent(monitoringMessage, severityLevel);
+        monitoringService.publishEvent(monitoringMessage, severityLevel, "ingestor");
     }
 }

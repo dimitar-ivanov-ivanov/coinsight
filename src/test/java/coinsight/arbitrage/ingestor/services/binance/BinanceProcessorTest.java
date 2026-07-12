@@ -1,7 +1,7 @@
 package coinsight.arbitrage.ingestor.services.binance;
 
-import coinsight.arbitrage.ingestor.services.MonitoringService;
 import coinsight.arbitrage.ingestor.util.BinanceMapper;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,7 +69,8 @@ class BinanceProcessorTest {
         // THEN
         verifyNoInteractions(binanceDltTemplate);
         verify(binanceTemplate).send(BINANCE_TOPIC, ticker.getCryptoPair(), ticker);
-        verify(monitoringService).publishEvent("Binance Published message " + ticker.getMessageId(), "INFO");
+        verify(monitoringService).publishEvent("Binance Published message " + ticker.getMessageId(),
+                "INFO", "ingestor");
     }
 
     @Test
@@ -99,7 +100,8 @@ class BinanceProcessorTest {
         } catch (Exception ex) {
             // THEN
             assertEquals(JsonProcessingException.class, ex.getClass());
-            verify(monitoringService).publishEvent("Binance Error: " + ex.getMessage(), "ERROR");
+            verify(monitoringService).publishEvent("Binance Error: " + ex.getMessage(),
+                    "ERROR", "ingestor");
             verify(binanceDltTemplate).send(eq(BINANCE_DLT_TOPIC), anyString(), eq(message));
         }
     }

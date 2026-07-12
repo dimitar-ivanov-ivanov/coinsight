@@ -1,7 +1,7 @@
 package coinsight.arbitrage.ingestor.consumer;
 
-import coinsight.arbitrage.ingestor.services.MonitoringService;
 import coinsight.arbitrage.ingestor.services.binance.BinanceProcessor;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,7 @@ class BinanceDeadLetterConsumerTest {
         // WHEN
         consumer.reprocessEvent(inputMessage);
         // THEN
-        verify(monitoringService).publishEvent(monitoringMessage, "INFO");
+        verify(monitoringService).publishEvent(monitoringMessage, "INFO", "ingestor");
         verify(processor).process(inputMessage);
     }
 
@@ -58,7 +58,7 @@ class BinanceDeadLetterConsumerTest {
         // WHEN
         consumer.reprocessEvent(inputMessage);
         // THEN
-        verify(monitoringService).publishEvent(anyString(), eq("ERROR"));
+        verify(monitoringService).publishEvent(anyString(), eq("ERROR"), eq("ingestor"));
         verify(processor).process(inputMessage);
     }
 

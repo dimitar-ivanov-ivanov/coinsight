@@ -1,8 +1,8 @@
 package coinsight.arbitrage.ingestor.components;
 
 import coinsight.arbitrage.ingestor.services.LeaderElectorService;
-import coinsight.arbitrage.ingestor.services.MonitoringService;
 import coinsight.arbitrage.ingestor.services.binance.BinanceProcessor;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +57,7 @@ public class BinanceWebSocketClient extends WebSocketClient {
         String subscribeMessage = buildSubscribeMessage();
         send(subscribeMessage);
 
-        monitoringService.publishEvent("Connected to Binance WebSocket", "INFO");
+        monitoringService.publishEvent("Connected to Binance WebSocket", "INFO", "ingestor");
     }
 
     /**
@@ -75,7 +75,7 @@ public class BinanceWebSocketClient extends WebSocketClient {
     @Override
     public void onClose(int code, String reason, boolean remote) {
         String message = "Binance Connection closed" + reason + ", code:" + code;
-        monitoringService.publishEvent(message, "INFO");
+        monitoringService.publishEvent(message, "INFO", "ingestor");
     }
 
     /**
@@ -86,7 +86,7 @@ public class BinanceWebSocketClient extends WebSocketClient {
      */
     @Override
     public void onError(Exception ex) {
-        monitoringService.publishEvent("Binance WebSocket error: " + ex.getMessage(), "ERROR");
+        monitoringService.publishEvent("Binance WebSocket error: " + ex.getMessage(), "ERROR", "ingestor");
     }
 
     /**

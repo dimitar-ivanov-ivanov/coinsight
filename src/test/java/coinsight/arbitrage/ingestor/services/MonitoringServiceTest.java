@@ -1,27 +1,23 @@
 package coinsight.arbitrage.ingestor.services;
 
-import coinsight.arbitrage.ingestor.util.MonitoringMapper;
-import monitor.MonitorDtlEvent;
-import monitor.MonitorEventOuterClass;
+import coinsight.arbitrage.shared.model.MonitorEvent;
+import coinsight.arbitrage.shared.monitoring.MonitoringMapper;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.AssertionsKt.assertNotNull;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -30,8 +26,6 @@ class MonitoringServiceTest {
 
     private static final String MONITOR_TOPIC = "monitor-topic";
 
-    private static final String DLT_MONITOR_TOPIC = "monitor-dlt-topic";
-
     @InjectMocks
     private MonitoringService monitoringService;
 
@@ -39,17 +33,13 @@ class MonitoringServiceTest {
     private MonitoringMapper mapper;
 
     @Mock
-    private KafkaTemplate<String, MonitorEventOuterClass.MonitorEvent> monitoringTemplate;
-
-    @Mock
-    private KafkaTemplate<String, MonitorDtlEvent.DltEvent> monitoringDltTemplate;
+    private KafkaTemplate<String, MonitorEvent> monitoringTemplate;
 
     @BeforeEach
     void setUp() {
         monitoringService = new MonitoringService();
         ReflectionTestUtils.setField(monitoringService, "monitoringTopic", MONITOR_TOPIC);
-        ReflectionTestUtils.setField(monitoringService, "dltMonitoringTopic", DLT_MONITOR_TOPIC);
-        MockitoAnnotations.openMocks(this);
+        MockitoAnnotations. openMocks(this);
     }
 
     @ParameterizedTest
@@ -57,11 +47,10 @@ class MonitoringServiceTest {
     void given_invalidInput_when_publishEvent_then_doNotPublish(String message, String severityLevel) {
         // GIVEN
         // WHEN
-        monitoringService.publishEvent(message, severityLevel);
+        monitoringService.publishEvent(message, severityLevel, "ingestor");
         // THEN
         verifyNoInteractions(mapper);
         verifyNoInteractions(monitoringTemplate);
-        verifyNoInteractions(monitoringDltTemplate);
     }
 
     @Test
@@ -69,37 +58,15 @@ class MonitoringServiceTest {
         // GIVEN
         String message = "msg";
         String severityLevel = "INFO";
-        MonitorEventOuterClass.MonitorEvent event = MonitorEventOuterClass.MonitorEvent.newBuilder()
-                .setMessageId(UUID.randomUUID().toString())
-                .build();
-        when(mapper.toMonitoringEvent(message, severityLevel)).thenReturn(event);
-        // WHEN
-        monitoringService.publishEvent(message, severityLevel);
-        // THEN
-        verify(mapper).toMonitoringEvent(message, severityLevel);
-        verify(monitoringTemplate).send(MONITOR_TOPIC, event.getMessageId(), event);
-        verifyNoInteractions(monitoringDltTemplate);
-    }
+        MonitorEvent event = new MonitorEvent(message, "", UUID.randomUUID().toString(),
+                severityLevel, "ingestor", "", "", Map.of(), "", "");
 
-    @Test
-    void given_error_when_publishToEvent_then_publishToDLT() {
-        // GIVEN
-        String message = "msg";
-        String severityLevel = "INFO";
-        Exception ex = new RuntimeException("BOOM");
-        ArgumentCaptor<MonitorDtlEvent.DltEvent> dltCaptor = ArgumentCaptor.forClass(MonitorDtlEvent.DltEvent.class);
-        when(mapper.toMonitoringEvent(anyString(), anyString())).thenThrow(ex);
+        when(mapper.toMonitoringEvent(message, severityLevel, "ingestor")).thenReturn(event);
         // WHEN
-        monitoringService.publishEvent(message, severityLevel);
+        monitoringService.publishEvent(message, severityLevel, "ingestor");
         // THEN
-        verifyNoInteractions(monitoringTemplate);
-        verify(monitoringDltTemplate).send(eq(DLT_MONITOR_TOPIC), dltCaptor.capture());
-
-        MonitorDtlEvent.DltEvent event = dltCaptor.getValue();
-        assertNotNull(event, "Published event to DLT should NOT be NULL.");
-        assertEquals(message, event.getMessage());
-        assertEquals(severityLevel, event.getSeverityLevel());
-        assertEquals(ex.getMessage(), event.getErrorReason());
+        verify(mapper).toMonitoringEvent(message, severityLevel,"ingestor");
+        verify(monitoringTemplate).send(MONITOR_TOPIC, event.messageId(), event);
     }
 
     private static Stream<Arguments> invalidInput() {

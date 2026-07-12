@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 
-import static coinsight.arbitrage.ingestor.util.LeaderUtil.INSTANCE_ID;
+import static coinsight.arbitrage.shared.util.InstanceIdentity.INSTANCE_ID;
 
 @Service
 public class LeaderElectorService {

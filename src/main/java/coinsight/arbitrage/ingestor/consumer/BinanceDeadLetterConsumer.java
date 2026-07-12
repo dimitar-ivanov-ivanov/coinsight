@@ -1,7 +1,7 @@
 package coinsight.arbitrage.ingestor.consumer;
 
-import coinsight.arbitrage.ingestor.services.MonitoringService;
 import coinsight.arbitrage.ingestor.services.binance.BinanceProcessor;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -42,7 +42,7 @@ public class BinanceDeadLetterConsumer {
             severityLevel = "ERROR";
         }
 
-        monitoringService.publishEvent(monitoringMessage, severityLevel);
+        monitoringService.publishEvent(monitoringMessage, severityLevel, "ingestor");
 
     }
 }

@@ -1,8 +1,8 @@
 package coinsight.arbitrage.ingestor.components;
 
 import coinsight.arbitrage.ingestor.services.LeaderElectorService;
-import coinsight.arbitrage.ingestor.services.MonitoringService;
 import coinsight.arbitrage.ingestor.services.binance.BinanceProcessor;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ class BinanceWebSocketClientTest {
         client.onOpen(null);
 
         // THEN
-        verify(monitoringService).publishEvent("Connected to Binance WebSocket", "INFO");
+        verify(monitoringService).publishEvent("Connected to Binance WebSocket", "INFO", "ingestor");
     }
 
     @Test
@@ -72,7 +72,7 @@ class BinanceWebSocketClientTest {
         client.onClose(code, reason, true);
 
         // THEN
-        verify(monitoringService).publishEvent(expectedMessage, "INFO");
+        verify(monitoringService).publishEvent(expectedMessage, "INFO", "ingestor");
         verifyNoInteractions(processor);
     }
 
@@ -87,6 +87,6 @@ class BinanceWebSocketClientTest {
 
         // THEN
         verifyNoInteractions(processor);
-        verify(monitoringService).publishEvent(expectedMessage, "ERROR");
+        verify(monitoringService).publishEvent(expectedMessage, "ERROR", "ingestor");
     }
 }

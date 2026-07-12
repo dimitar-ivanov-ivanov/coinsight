@@ -49,7 +49,7 @@ public class CoinbaseProcessor extends ExchangeProcessor<CoinbaseEvent.CoinbaseT
         CoinbaseEvent.CoinbaseTicker ticker = coinbaseMapper.toCoinbaseTicker(message);
         if (ticker != null) {
             coinbaseTemplate.send(coinbaseTopic, ticker.getCryptoPair(), ticker);
-            monitoringService.publishEvent("Coinbase Published message " + ticker.getMessageId(), "INFO");
+            monitoringService.publishEvent("Coinbase Published message " + ticker.getMessageId(), "INFO", "ingestor");
         }
         return ticker;
     }

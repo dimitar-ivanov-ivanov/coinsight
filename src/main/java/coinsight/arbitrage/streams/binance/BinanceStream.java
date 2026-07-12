@@ -54,7 +54,8 @@ public class BinanceStream {
                         .withValueSerde(serde))
                 .windowedBy(window)
                 .reduce((oldVal, newVal) -> newVal,
-                        Materialized.<String, BinanceTickerOuterClass.BinanceTicker, WindowStore<Bytes, byte[]>>as("binance-latest-reduce-store")
+                        Materialized.<String, BinanceTickerOuterClass.BinanceTicker, WindowStore<Bytes, byte[]>>as(
+                                "binance-latest-reduce-store")
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(serde))
                 .toStream()

@@ -1,7 +1,7 @@
 package coinsight.arbitrage.ingestor.services.binance;
 
 import coinsight.arbitrage.ingestor.components.BinanceWebSocketClient;
-import coinsight.arbitrage.ingestor.services.MonitoringService;
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -26,9 +26,9 @@ public class BinanceConnector {
     public void init() {
         try {
             webSocketClient.connect();
-            monitoringService.publishEvent("Connecting to Binance WebSocket", "INFO");
+            monitoringService.publishEvent("Connecting to Binance WebSocket", "INFO", "ingestor");
         } catch (Exception e) {
-            monitoringService.publishEvent("Failed to initialize Binance WebSocket: " + e.getMessage(), "INFO");
+            monitoringService.publishEvent("Failed to initialize Binance WebSocket: " + e.getMessage(), "INFO", "ingestor");
         }
     }
 }

@@ -54,7 +54,8 @@ public class CoinbaseStream {
                         .withValueSerde(serde))
                 .windowedBy(window)
                 .reduce((oldVal, newVal) -> newVal,
-                        Materialized.<String, CoinbaseEvent.CoinbaseTicker, WindowStore<Bytes, byte[]>>as("coinbase-latest-reduce-store")
+                        Materialized.<String, CoinbaseEvent.CoinbaseTicker, WindowStore<Bytes, byte[]>>as(
+                                "coinbase-latest-reduce-store")
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(serde))
                 .toStream()

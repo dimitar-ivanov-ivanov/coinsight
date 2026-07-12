@@ -1,5 +1,6 @@
 package coinsight.arbitrage.ingestor.services;
 
+import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -24,7 +25,7 @@ public abstract class ExchangeProcessor<T> {
         try {
             process(message);
         } catch (Exception ex) {
-            monitoringService.publishEvent(getExchangeName() + "Error: " + ex.getMessage(), "ERROR");
+            monitoringService.publishEvent(getExchangeName() + "Error: " + ex.getMessage(), "ERROR", "ingestor");
 
             // send message to DLT
             dltTemplate.send(getDltTopicName(), UUID.randomUUID().toString(), message);
