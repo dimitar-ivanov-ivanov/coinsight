@@ -3,21 +3,20 @@ package coinsight.arbitrage.ingestor.consumer;
 import coinsight.arbitrage.ingestor.services.binance.BinanceProcessor;
 import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import ticker.BinanceTickerOuterClass;
 
 @Service
+@RequiredArgsConstructor
 @ConditionalOnProperty(name = "kafka.binance.dlt.enabled", havingValue = "true")
 public class BinanceDeadLetterConsumer {
 
-    @Autowired
-    private BinanceProcessor binanceProcessor;
+    private final BinanceProcessor binanceProcessor;
 
-    @Autowired
-    private MonitoringService monitoringService;
+    private final MonitoringService monitoringService;
 
     /**
      * Consumer for the binance dead letter topic.

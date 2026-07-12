@@ -2,20 +2,19 @@ package coinsight.arbitrage.bff.consumer;
 
 import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import com.google.protobuf.util.JsonFormat;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import ticker.BinanceTickerOuterClass;
 
 @Service
+@RequiredArgsConstructor
 public class BinanceLatestConsumer {
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    @Autowired
-    private MonitoringService monitoringService;
+    private final MonitoringService monitoringService;
 
     /**
      * Consumer for the latest binance events.

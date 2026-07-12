@@ -24,8 +24,8 @@ class BinanceConnectorTest {
 
     @BeforeEach
     void setUp() {
-        connector = new BinanceConnector();
         MockitoAnnotations.openMocks(this);
+        connector = new BinanceConnector(client, monitoringService);
     }
 
     @Test

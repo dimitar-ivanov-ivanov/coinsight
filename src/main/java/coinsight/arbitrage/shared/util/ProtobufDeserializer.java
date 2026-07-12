@@ -2,15 +2,13 @@ package coinsight.arbitrage.shared.util;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+@Slf4j
 public class ProtobufDeserializer<T extends com.google.protobuf.Message> implements Deserializer<T> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProtobufDeserializer.class);
 
     private final Parser<T> parser;
 
@@ -32,7 +30,7 @@ public class ProtobufDeserializer<T extends com.google.protobuf.Message> impleme
         try {
             return parser.parseFrom(data);
         } catch (InvalidProtocolBufferException e) {
-            LOGGER.error("Failed to deserialize protobuf message from topic: {}", topic, e);
+            log.error("Failed to deserialize protobuf message from topic: {}", topic, e);
             throw new RuntimeException("Failed to deserialize protobuf message", e);
         }
     }

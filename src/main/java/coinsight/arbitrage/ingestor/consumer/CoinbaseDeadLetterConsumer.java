@@ -4,20 +4,19 @@ import coinbase.ticker.CoinbaseEvent;
 import coinsight.arbitrage.ingestor.services.coinbase.CoinbaseProcessor;
 import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 @ConditionalOnProperty(name = "kafka.coinbase.dlt.enabled", havingValue = "true")
 public class CoinbaseDeadLetterConsumer {
 
-    @Autowired
-    private CoinbaseProcessor coinbaseProcessor;
+    private final CoinbaseProcessor coinbaseProcessor;
 
-    @Autowired
-    private MonitoringService monitoringService;
+    private final MonitoringService monitoringService;
 
     /**
      * Consumer for the coinbase dead letter topic.

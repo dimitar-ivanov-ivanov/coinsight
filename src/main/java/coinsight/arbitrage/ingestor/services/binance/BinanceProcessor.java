@@ -3,26 +3,24 @@ package coinsight.arbitrage.ingestor.services.binance;
 import coinsight.arbitrage.ingestor.services.ExchangeProcessor;
 import coinsight.arbitrage.ingestor.util.BinanceMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import ticker.BinanceTickerOuterClass;
 
 @Service
+@RequiredArgsConstructor
 public class BinanceProcessor extends ExchangeProcessor<BinanceTickerOuterClass.BinanceTicker> {
 
-    @Autowired
-    private KafkaTemplate<String, BinanceTickerOuterClass.BinanceTicker> binanceTemplate;
+    private final KafkaTemplate<String, BinanceTickerOuterClass.BinanceTicker> binanceTemplate;
 
-    @Autowired
-    private BinanceMapper binanceMapper;
+    private final BinanceMapper binanceMapper;
+
+    private final KafkaTemplate<String, String> binanceDltTemplate;
 
     @Value("${kafka.binance.topic}")
     private String binanceTopic;
-
-    @Autowired
-    private KafkaTemplate<String, String> binanceDltTemplate;
 
     @Value("${kafka.binance.dlt.topic}")
     private String binanceDeadLetterTopic;

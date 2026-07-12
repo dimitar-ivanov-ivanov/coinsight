@@ -175,7 +175,7 @@ Local Grafana testing requires admin/admin as credentials.
 - Run this ``node client.js`` after start the application
 
 # Docker problems (Windows)
- - If you have problems with ports, use the commands belows
+ - If you have problems with ports, use the commands belows after opening a console terminal in admin mode
  - ``net stop winnat``
  - ``net start winnat``
 

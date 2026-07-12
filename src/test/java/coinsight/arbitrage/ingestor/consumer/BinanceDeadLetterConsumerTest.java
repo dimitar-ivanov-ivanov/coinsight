@@ -30,8 +30,8 @@ class BinanceDeadLetterConsumerTest {
 
     @BeforeEach
     void setUp() {
-        consumer = new BinanceDeadLetterConsumer();
         MockitoAnnotations.openMocks(this);
+        consumer = new BinanceDeadLetterConsumer(processor, monitoringService);
     }
 
     @Test

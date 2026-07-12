@@ -28,8 +28,8 @@ class CoinbaseDeadLetterConsumerTest {
 
     @BeforeEach
     void setUp() {
-        consumer = new CoinbaseDeadLetterConsumer();
         MockitoAnnotations.openMocks(this);
+        consumer = new CoinbaseDeadLetterConsumer(processor, monitoringService);
     }
 
     @Test

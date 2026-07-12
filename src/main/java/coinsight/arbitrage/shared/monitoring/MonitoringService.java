@@ -2,17 +2,15 @@ package coinsight.arbitrage.shared.monitoring;
 
 import ch.qos.logback.core.util.StringUtil;
 import coinsight.arbitrage.shared.model.MonitorEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class MonitoringService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MonitoringService.class);
 
     @Autowired
     private MonitoringMapper monitoringMapper;
@@ -48,12 +46,12 @@ public class MonitoringService {
             monitoringTemplate.send(monitoringTopic, monitoringEvent.messageId(), monitoringEvent)
                     .whenComplete((result, ex) -> {
                         if (ex != null) {
-                            LOGGER.error("Failed to publish monitoring event to {}: [{}] {}",
+                            log.error("Failed to publish monitoring event to {}: [{}] {}",
                                     monitoringTopic, severityLevel, message, ex);
                         }
                     });
         } catch (Exception ex) {
-            LOGGER.error("Failed to publish monitoring event to {}: [{}] {}",
+            log.error("Failed to publish monitoring event to {}: [{}] {}",
                     monitoringTopic, severityLevel, message, ex);
         }
     }

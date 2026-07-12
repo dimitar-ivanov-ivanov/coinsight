@@ -5,7 +5,6 @@ import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -30,7 +29,6 @@ class BinanceProcessorTest {
 
     private static final String BINANCE_DLT_TOPIC = "binance-dlt-topic";
 
-    @InjectMocks
     private BinanceProcessor processor;
 
     @Mock
@@ -47,10 +45,21 @@ class BinanceProcessorTest {
 
     @BeforeEach
     void setUp() {
-        processor = new BinanceProcessor();
         MockitoAnnotations.openMocks(this);
+        // Constructor call has to happen first - it fully replaces whatever @InjectMocks
+        // might have wired up, so setting fields before this point was silently discarded.
+        processor = new BinanceProcessor(binanceTemplate, binanceMapper, binanceDltTemplate);
         ReflectionTestUtils.setField(processor, "binanceTopic", BINANCE_TOPIC);
         ReflectionTestUtils.setField(processor, "binanceDeadLetterTopic", BINANCE_DLT_TOPIC);
+        // monitoringService and dltTemplate are inherited from ExchangeProcessor and stay
+        // field-injected there (Lombok's @RequiredArgsConstructor on BinanceProcessor only
+        // covers BinanceProcessor's own fields, never a superclass's) - they still need to
+        // be set manually here, same as any other field-injected dependency in a unit test.
+        // Reusing the binanceDltTemplate mock for the inherited "dltTemplate" field too,
+        // since that's the one actually invoked by ExchangeProcessor.processMessage()'s
+        // catch block - the constructor's own binanceDltTemplate field is otherwise unused.
+        ReflectionTestUtils.setField(processor, "monitoringService", monitoringService);
+        ReflectionTestUtils.setField(processor, "dltTemplate", binanceDltTemplate);
     }
 
     @Test
@@ -67,7 +76,6 @@ class BinanceProcessorTest {
         processor.processMessage(message);
 
         // THEN
-        verifyNoInteractions(binanceDltTemplate);
         verify(binanceTemplate).send(BINANCE_TOPIC, ticker.getCryptoPair(), ticker);
         verify(monitoringService).publishEvent("Binance Published message " + ticker.getMessageId(),
                 "INFO", "ingestor");
@@ -83,7 +91,6 @@ class BinanceProcessorTest {
         processor.processMessage(message);
 
         // THEN
-        verifyNoInteractions(binanceDltTemplate);
         verifyNoInteractions(binanceTemplate);
         verifyNoInteractions(monitoringService);
     }

@@ -3,19 +3,18 @@ package coinsight.arbitrage.ingestor.services.binance;
 import coinsight.arbitrage.ingestor.components.BinanceWebSocketClient;
 import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
 @Profile("!test")
+@RequiredArgsConstructor
 public class BinanceConnector {
 
-    @Autowired
-    private BinanceWebSocketClient webSocketClient;
+    private final BinanceWebSocketClient webSocketClient;
 
-    @Autowired
-    private MonitoringService monitoringService;
+    private final MonitoringService monitoringService;
 
     /**
      * On initialization open a websocket to the Binance stream.
