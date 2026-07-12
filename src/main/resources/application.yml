@@ -5,20 +5,21 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
     compression-type: lz4 # use lz4 for better compression and lower memory footprint for messages
-  redis:
-    host: localhost
-    port: 6379
-    password: ""
-    timeout: 6000
-    lettuce:
-      pool:
-        # hard limit of connections
-        max-active: 30 # currently needs 21 (2 consumer + 1 job) but add more for buffer
-        # max idle connections (unused but ready)
-        ## excess idle connections get closed to save resources
-        max-idle: 15
-        # pool proactively creates connections to meet this minimum if not met
-        min-idle: 5 # maintain some baseline for a quick response
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ""
+      timeout: 6000
+      lettuce:
+        pool:
+          # hard limit of connections
+          max-active: 30 # currently needs 21 (2 consumer + 1 job) but add more for buffer
+          # max idle connections (unused but ready)
+          ## excess idle connections get closed to save resources
+          max-idle: 15
+          # pool proactively creates connections to meet this minimum if not met
+          min-idle: 5 # maintain some baseline for a quick response
 
 server:
   port: 8080
