@@ -20,6 +20,16 @@ spring:
           max-idle: 15
           # pool proactively creates connections to meet this minimum if not met
           min-idle: 5 # maintain some baseline for a quick response
+  datasource:
+    url: jdbc:postgresql://localhost:5432/coinsight
+    username: coinsight
+    password: coinsight
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
 
 server:
   port: 8080

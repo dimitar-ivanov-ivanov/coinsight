@@ -79,6 +79,9 @@ dependencies {
     // building pooled Lettuce config entirely (no error, it just falls back to unpooled).
     implementation 'org.apache.commons:commons-pool2'
 
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'org.postgresql:postgresql'
+
     // Plain WebSocket support - this is all you need
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
