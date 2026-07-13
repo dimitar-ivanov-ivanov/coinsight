@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # The arbitrage monolith runs on the host (see bootstrap-servers: localhost:*
+  # in application.yml), not as a container - so it's scraped via
+  # host.docker.internal instead of a service name, same reasoning as the
+  # Kafka PLAINTEXT_HOST listener.
+  - job_name: coinsight-arbitrage
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["host.docker.internal:8080"]
+        labels:
+          application: arbitrage

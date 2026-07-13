@@ -1,5 +1,6 @@
-# Auto-provisions Loki as a Grafana datasource on startup, so it doesn't have to be
-# added manually through the UI every time the stack is recreated.
+# Auto-provisions Loki and Prometheus as Grafana datasources on startup, so
+# they don't have to be added manually through the UI every time the stack is
+# recreated.
 apiVersion: 1
 
 datasources:
@@ -8,4 +9,11 @@ datasources:
     access: proxy
     url: http://loki:3100
     isDefault: true
+    editable: true
+
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: false
     editable: true

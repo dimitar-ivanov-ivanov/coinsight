@@ -183,6 +183,29 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin
     depends_on:
       - loki
+      - prometheus
+    networks:
+      - monitoring-network
+
+  # ========================================
+  # PROMETHEUS: scrapes /actuator/prometheus on the app (Micrometer), which
+  # Grafana queries Prometheus for dashboards/alerts, same as it does with Loki.
+  # ========================================
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: prometheus
+    restart: unless-stopped
+    extra_hosts:
+      # lets the container resolve the host running the app (Docker Desktop
+      # provides this out of the box on Windows/Mac; on Linux this mapping
+      # makes it work there too)
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
     networks:
       - monitoring-network
 
@@ -252,6 +275,8 @@ volumes:
   loki_data:
     driver: local
   grafana_data:
+    driver: local
+  prometheus_data:
     driver: local
   redis_data:
     driver: local

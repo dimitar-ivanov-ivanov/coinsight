@@ -29,7 +29,8 @@ Each of these parts are in separate packages, they have no compile time dependen
     - Monitoring Stack 
       - Vector (log collector, consumes monitor-topic from Kafka directly, no custom Java consumer)
       - Loki (log storage, queried via LogQL)
-      - Grafana (dashboards/alerts, queries Loki)
+      - Prometheus (metrics storage, scrapes the app's `/actuator/prometheus` endpoint)
+      - Grafana (dashboards/alerts, queries Loki and Prometheus)
 
 # Coinsight Diagram
 Refer to "draw.excalidraw" file in /diagram.
@@ -102,6 +103,16 @@ Monitoring events (`MonitorEvent` in `coinsight.arbitrage.shared.model`) are pla
 as JSON via Spring Kafka's built-in `JsonSerializer`. `monitor-topic` is low volume and exists to be read (Grafana, or `kafka-console-consumer` while debugging).
 
 Local Grafana testing requires admin/admin as credentials.
+
+# Metrics (Prometheus)
+The app exposes Micrometer metrics at `/actuator/prometheus` (only `health` and `prometheus` are exposed via
+`management.endpoints.web.exposure.include` - not `include: *`, which would also leak env/beans/threaddump).
+Prometheus (in `docker/docker-compose.yml`) scrapes this endpoint on a 15s interval. Since the app runs on the host
+rather than in a container (same reason Kafka's bootstrap servers are `localhost:*`), the scrape target is
+`host.docker.internal:8080`, not a service name - see `docker/prometheus/prometheus.yml`.
+Grafana auto-provisions a Prometheus datasource the same way it does for Loki (see
+`docker/grafana/provisioning/datasources/datasources.yaml`), so it's queryable immediately after `docker compose up`
+with no manual setup
 
 # Kafka
 - 3 combined broker+controller nodes (KRaft, combined mode): each node participates in the Raft metadata quorum (controller role) AND serves message traffic (broker role)
