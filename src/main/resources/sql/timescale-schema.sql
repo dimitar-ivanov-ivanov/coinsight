@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS ticks (
     time        TIMESTAMPTZ NOT NULL,
     exchange    TEXT        NOT NULL,
     crypto_pair TEXT        NOT NULL,
-    price       NUMERIC     NOT NULL
+    price       NUMERIC     NOT NULL,
+    message_id  TEXT        NOT NULL
 );
 
 -- Time partitioning (required for every hypertable) - one chunk per day.
@@ -17,6 +18,14 @@ SELECT create_hypertable(
 -- Space partitioning on crypto_pair, in addition to time - a query scoped to
 -- one pair doesn't need to touch chunks holding every other pair's data.
 SELECT add_dimension('ticks', by_hash('crypto_pair', 4), if_not_exists => TRUE);
+
+-- Idempotency on message_id
+-- TimescaleDB requires every unique constraint on a hypertable to
+-- include ALL of its partitioning columns (time AND crypto_pair here) -
+-- uniqueness is enforced per chunk, so message_id alone can't be a standalone
+-- UNIQUE column on this table; it has to be composite.
+ALTER TABLE ticks ADD CONSTRAINT ticks_time_pair_message_unique
+    UNIQUE (time, crypto_pair, message_id);
 
 -- The time column is indexed automatically by create_hypertable - this
 -- covers the actual query shape (one pair/exchange, ordered by recency).
@@ -57,5 +66,7 @@ SELECT add_continuous_aggregate_policy('ticks_daily',
     if_not_exists => TRUE
 );
 
--- 1 month retention on raw ticks
+-- 1 month retention on raw ticks only - NOT on ticks_daily. Continuous
+-- aggregates are backed by their own separate hypertable, so the daily
+-- rollup can outlive the raw data that fed it at negligible storage cost.
 SELECT add_retention_policy('ticks', INTERVAL '1 month', if_not_exists => TRUE);
