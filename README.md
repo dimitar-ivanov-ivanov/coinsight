@@ -159,6 +159,18 @@ with no manual setup
 # TimeScaleDB
 - One main instance that will be used for all traffic and a replica on standby to ensure availability.
 - For the event storage, when we write an event we know it won't be update we safely compress older data to save storage.
+- No migration tool (Flyway/Liquibase) is used - schema/hypertable/policy setup lives as plain SQL in
+  ``src/main/resources/sql/timescale-schema.sql``, run manually against the container. `spring.jpa.hibernate.ddl-auto`
+  is `none` on purpose - Hibernate has no concept of hypertables or continuous aggregates, so schema management can't
+  go through it regardless of environment.
+- Use DBeaver or tool to run the queries
+- Currently only ONE tier is built - the raw `ticks` hypertable (partitioned by time and by crypto_pair) and a daily
+  OHLC (open/high/low/close) continuous aggregate, `ticks_daily`, rolling it up automatically in the background.
+- Retention is 1 month on the raw `ticks` table only, not on `ticks_daily` - continuous aggregates are backed by their
+  own separate hypertable, so the daily rollup is kept independently and can outlive the raw data that fed it, since
+  its storage cost is negligible compared to raw ticks.
+- Further tiers (1-minute, 1-hour) are meant to follow the same pattern later, each rolling up from the tier below it
+  rather than from raw data again, once there's an actual UI consumer to justify building them.
 
 # Checkstyle
 - Checkstyle is used to enforce standards for code quality
