@@ -10,6 +10,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.UUID;
+
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -37,7 +39,7 @@ class CoinbaseDeadLetterConsumerTest {
         // GIVEN
         String inputMessage = "";
         CoinbaseEvent.CoinbaseTicker event = CoinbaseEvent.CoinbaseTicker.newBuilder()
-                .setMessageId(100)
+                .setMessageId(UUID.randomUUID().toString())
                 .build();
         String monitoringMessage = "[DLT] Successfully republished message with id " + event.getMessageId();
         when(processor.process(inputMessage)).thenReturn(event);

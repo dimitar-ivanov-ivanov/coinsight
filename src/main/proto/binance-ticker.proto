@@ -15,7 +15,7 @@ message BinanceTicker {
   int64 best_ask_qty = 6;      // "A" -> for liquidity purposes
   int64 volume = 7;            // "v" -> ensure active trading
   string timestamp = 8;         // When the event was created in our system, ISO8601 format
-  int32 message_id = 9;        // Unique identifier for the message, build using the event time, crypto pair and volume
+  string message_id = 9;        // Unique identifier for the message, build using the event time, crypto pair and volume
   int32 price_scale = 10;
 }
 /**

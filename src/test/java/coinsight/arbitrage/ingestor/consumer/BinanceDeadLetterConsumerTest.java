@@ -10,6 +10,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import ticker.BinanceTickerOuterClass;
 
+import java.util.UUID;
+
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -17,7 +19,7 @@ import static org.mockito.Mockito.when;
 
 class BinanceDeadLetterConsumerTest {
 
-    private static final int MESSAGE_ID = 1;
+    private static final String MESSAGE_ID = UUID.randomUUID().toString();
 
     @InjectMocks
     private BinanceDeadLetterConsumer consumer;

@@ -14,7 +14,7 @@ message CoinbaseTicker {
   int64 best_ask_quantity = 6; // there two are needed for liquidity, scale 8
   string event_time = 7; // timestamp for when the event happened in the Coinbase system
   string timestamp = 8; // When the event was created in our system, ISO8601 format
-  int32 message_id = 9; // Unique identifier (UUID)
+  string message_id = 9; // Unique identifier for the message, build using the event time, crypto pair and volume
   int32 price_scale = 10;
   int32 quantity_scale = 11;
 };

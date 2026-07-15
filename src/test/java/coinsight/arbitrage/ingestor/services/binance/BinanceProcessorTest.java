@@ -11,6 +11,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 import ticker.BinanceTickerOuterClass;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -21,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 class BinanceProcessorTest {
 
-    private static final int MESSAGE_ID = 1;
+    private static final String MESSAGE_ID = UUID.randomUUID().toString();
 
     private static final String CRYPTO_PAIR = "BTC:USDC";
 
