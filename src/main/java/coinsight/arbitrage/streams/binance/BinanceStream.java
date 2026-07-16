@@ -8,7 +8,9 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.Suppressed;
 import org.apache.kafka.streams.kstream.TimeWindows;
+import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.state.WindowStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,7 +40,7 @@ public class BinanceStream {
     public void binanceStream(StreamsBuilder builder) {
         TimeWindows window = TimeWindows.ofSizeAndGrace(
                 Duration.ofMillis(windowSize),
-                Duration.ofSeconds(gracePeriod));
+                Duration.ofMillis(gracePeriod));
 
         Serde<BinanceTickerOuterClass.BinanceTicker> serde
                 = new BinanceTickerSerde();
@@ -46,9 +48,6 @@ public class BinanceStream {
         builder.stream(input, Consumed.with(Serdes.String(), serde))
                 // Named explicitly (both here and in Materialized below) so the internal
                 // repartition/changelog topics Kafka Streams creates get human-readable names
-                // like "arbitrage-stream-binance-latest-reduce-store-changelog", instead of an
-                // opaque auto-incrementing counter (...STATE-STORE-0000000001...) that gives no
-                // indication of which exchange's topology it belongs to
                 .groupByKey(Grouped.<String, BinanceTickerOuterClass.BinanceTicker>as("binance-ticker-grouped")
                         .withKeySerde(Serdes.String())
                         .withValueSerde(serde))
@@ -58,6 +57,14 @@ public class BinanceStream {
                                 "binance-latest-reduce-store")
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(serde))
+                // Without this, a windowed reduce is a continuously-updating table - every new
+                // tick that updates a window's value is a candidate to be forwarded downstream
+                // immediately (subject to commit-interval caching), not just once when the
+                // window closes. This buffers every update and only forwards the single final
+                // value once the window is genuinely closed - matching the README's/comment's
+                // actual stated intent ("take the last value in the window") for the first time.
+                .suppress(Suppressed.<Windowed<String>>untilWindowCloses(Suppressed.BufferConfig.unbounded())
+                        .withName("binance-latest-suppress"))
                 .toStream()
                 .selectKey((windowedKey, val) -> windowedKey.key())
                 .to(output, Produced.with(Serdes.String(), serde));

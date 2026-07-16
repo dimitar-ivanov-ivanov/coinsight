@@ -22,16 +22,16 @@ public class KafkaConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Value("${kafka.binance.latest.group}")
+    @Value("${kafka.binance.latest.aggregations-group}")
     private String binanceLatestGroup;
 
-    @Value("${kafka.binance.latest.consumers}")
+    @Value("${kafka.binance.latest.aggregations-consumers}")
     private int binanceConsumers;
 
-    @Value("${kafka.coinbase.latest.group}")
+    @Value("${kafka.coinbase.latest.aggregations-group}")
     private String coinbaseLatestGroup;
 
-    @Value("${kafka.coinbase.latest.consumers}")
+    @Value("${kafka.coinbase.latest.aggregations-consumers}")
     private int coinbaseConsumers;
 
     @Bean
