@@ -9,10 +9,9 @@ The UI will most likely be a mobile application. (TBD)
 Currently there are multiple parts of the project 
 - Ingestor
 - Aggregations
-- Event Storage
 - Streams
-- Monitoring
 - BFF
+- Shared (contains shared component, in the future can be extracted as library if we split up the project into microservices)
 
 Starting the project as a monolith as its easier for hotfixing and deployments, if a particular part has to be scaled it would be easy to separate it.
 Each of these parts are in separate packages, they have no compile time dependencies and if they communicate its through Kafka.
@@ -48,23 +47,24 @@ The message is published to the DLT raw in String format, unlike the other topic
 Dead letter strategy is having a consumer of the DLT behind a feature flag that is disabled by default, that consumer will take the messages from the DTL and try to republish them to the main topic.
 It's expected that when the DLT consumer is enabled the errors shouldn't happen anymore and then republishing should be successful.
 
-In order to ensure we have processing for each pair in order the message id is the crypto pair ("BTC-USDT", "BTC-USD", "ETH-USD" etc)
-This makes sure that all events with the same message id are put in the same partition so only 1 consumer thread will read them, thus ensuring ordering.
+In order to ensure we have processing for each pair in order, the Kafka **partition key** for every exchange topic is the
+crypto pair ("BTC-USDT", "BTC-USD", "ETH-USD" etc). Using crypto pair as the key makes sure that all events
+for the same pair land in the same partition, so only 1 consumer thread ever reads them, ensuring ordering per pair.
 
 Since at some point we'll scale the app to at least 2 instance that would mean that 2 instances have their own socket listening to exchange events.
 This will lead to publishing the same event twice so we'll need a distributed lock to ensure that only 1 socket is working regardless of how much 
 we scale horizontally.
 
 # Coinsight Aggregations
-The aggregations receive the input events that the ingestor pushes in the exchange topics.
-When consuming we consume a batch of events, the events are split up into sub-batches by message id. 
-Meaning we'll have sub-batches for "BTC-USDT", "BTC-USD" etc.
-Each subbatch will be taken by a virtual thread as the work it'll do is network based and virtual threads are very good there.
-The processed data will be writen to TimeScaleDB.
-For every event we'll do an idempotency check to make sure the event hasn't been processed before, the idempotency storage will be 
-the database even though its slower than Redis, we need to make sure that persistance of the data and idempotency record is IN THE SAME TRANSACTION.
-If I put the idempotency records in Redis and then the DB fails on write it could lead to inconsistent data.
-If the record is present in TimeScaleDB  then it's been processed before.
+Aggregations consumes from `binance-latest-topic`/`coinbase-latest-topic` - the windowed output of Streams, not the raw
+exchange topics - one event at a time via a plain `@KafkaListener` per exchange (`BinanceAggregationsLatestConsumer`/
+`CoinbaseAggregationsLatestConsumer`), each writing straight to TimescaleDB
+
+No batching, no sub-batches by crypto pair, no virtual threads - the actual write is a single `JdbcTemplate` insert per
+event. Idempotency is handled entirely by the DB itself: `ticks` has a `UNIQUE (time, crypto_pair, message_id)`
+constraint, and the insert is `ON CONFLICT DO NOTHING`. A genuinely re-delivered event just silently doesn't insert a
+second row - no exception thrown, no separate idempotency table, no need to coordinate a transaction across two
+writes. See `src/main/resources/sql/timescale-schema.sql` for the schema.
 
 # Consight Streams
 I'll be using Kafka Streams whose aim is to take all events per topic per message id and only output the latest one every 300 millis.
@@ -81,18 +81,10 @@ neither topology depends on it.
 When the user opens their mobile a socket is opened to the BFF.
 The BFF listens to the output topics (`binance-latest-topic`/`coinbase-latest-topic`) and whatever comes through is sent through the socket to the client,
 on `/topic/binance` and `/topic/coinbase` respectively.
-But before the data is send an idempotency check is executed to make sure that the record hasn't been processed before.
-The idempotency records are stored in Redis as it's faster and it stores its data in memory.
-If the record is present in Redis then it's been processed before.
 
-# Consight Event Storage 
-It's good to have an event storage just in case I have to replay events. I'll be storing them in 
-TimeScaleDB and compressing them to lower memory requirements.
-TimeScale has aggressive compression algorithms, up to 90% less memory.
-The event storage avoids Kafka as a single point of failure. 
-There is a job (disabled by default) which aims to take the events from the DB and push them to the exchange topics, thus replaying them.
-The way events will be consumed by exchanges is again through socket, the difference is the sockets in **Ingestor** push to Kafka and these 
-will push to the event storage table in TimeScaleDB.
+There is no idempotency check here on purpose. A duplicate live tick just means the client renders the same price
+twice in a row - cosmetically invisible for a live ticker, not worth an extra Redis round-trip per message for a
+problem with no real user-facing symptom.
 
 # Monitoring
 Vector connects to Kafka directly as a consumer group member of `monitor-topic`, decodes the payload
