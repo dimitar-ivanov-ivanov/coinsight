@@ -66,6 +66,38 @@ constraint, and the insert is `ON CONFLICT DO NOTHING`. A genuinely re-delivered
 second row - no exception thrown, no separate idempotency table, no need to coordinate a transaction across two
 writes. See `src/main/resources/sql/timescale-schema.sql` for the schema.
 
+Only `ticks` is a real hypertable. Every zoom-level tier above it is a **continuous aggregate** -
+despite the "MATERIALIZED VIEW" keyword, this is NOT a plain Postgres view recomputed on every query. TimescaleDB
+physically materializes and auto-refreshes it in the background - genuinely stored data.
+
+Each tier is built FROM the tier directly below it, not from raw `ticks` again each time - this is TimescaleDB's
+supported "hierarchical continuous aggregates" feature, so `ticks_daily` reuses `ticks_hourly`'s already-computed work
+instead of re-scanning raw data, and so on up the chain:
+
+```
+ticks (raw hypertable)
+  -> ticks_hourly   (continuous aggregate, built FROM ticks)
+      -> ticks_daily   (continuous aggregate, built FROM ticks_hourly)
+          -> ticks_weekly  (continuous aggregate, built FROM ticks_daily)
+```
+
+Each tier stores real OHLC (open/high/low/close) columns, not a flat average - an average of a day that spiked and
+came back down is indistinguishable from a day that never moved at all, which would silently erase the exact signal
+an arbitrage app exists to show. `avg_price` is kept too as an optional "center line", alongside `tick_count`.
+
+`tick_count` isn't just informational - it's what makes correct re-aggregation possible once you're rolling up an
+already-aggregated tier. `ticks_daily`/`ticks_weekly` do NOT compute `avg(avg_price)` from the tier below - that would
+silently mis-weight the result unless every bucket underneath happened to have the exact same tick count. Instead
+they use a proper weighted average: `sum(avg_price * tick_count) / sum(tick_count)`.
+
+Each tier's refresh policy is deliberately staggered so it never aggregates over data the tier below hasn't finished
+finalizing yet - `ticks_daily`'s `end_offset` (1 hour) is larger than `ticks_hourly`'s (10 minutes), and
+`ticks_weekly`'s (1 day) is larger than `ticks_daily`'s (1 hour).
+
+Retention (1 month) applies only to raw `ticks` - none of the rollup tiers have their own retention policy.
+Continuous aggregates are backed by their own separate hypertable, so hourly/daily/weekly can all outlive the raw data
+that fed them at negligible storage cost - there's no reason to lose long-range history just because raw ticks expired.
+
 # Consight Streams
 I'll be using Kafka Streams whose aim is to take all events per topic per message id and only output the latest one every 300 millis.
 This is done because if I change the data all of the time the human eye won't be able to track the data so we want to have a window of 300 millis.
@@ -158,13 +190,13 @@ with no manual setup
   is `none` on purpose - Hibernate has no concept of hypertables or continuous aggregates, so schema management can't
   go through it regardless of environment.
 - Use DBeaver or tool to run the queries
-- Currently only ONE tier is built - the raw `ticks` hypertable (partitioned by time and by crypto_pair) and a daily
-  OHLC (open/high/low/close) continuous aggregate, `ticks_daily`, rolling it up automatically in the background.
-- Retention is 1 month on the raw `ticks` table only, not on `ticks_daily` - continuous aggregates are backed by their
-  own separate hypertable, so the daily rollup is kept independently and can outlive the raw data that fed it, since
-  its storage cost is negligible compared to raw ticks.
-- Further tiers (1-minute, 1-hour) are meant to follow the same pattern later, each rolling up from the tier below it
-  rather than from raw data again, once there's an actual UI consumer to justify building them.
+- Hourly/daily/weekly rollup tiers are all built (`ticks_hourly` -> `ticks_daily` -> `ticks_weekly`), each rolling
+  up from the tier below it rather than from raw data - see **Coinsight Aggregations** above for the diagram and
+  the reasoning (why each tier is a continuous aggregate not a plain view, the weighted-average correction, and the
+  staggered refresh policies).
+- Retention is 1 month on the raw `ticks` table only - none of the rollup tiers have their own retention policy, since
+  continuous aggregates are backed by their own separate hypertable and can outlive the raw data that fed them at
+  negligible storage cost.
 
 # Checkstyle
 - Checkstyle is used to enforce standards for code quality

@@ -36,11 +36,8 @@ public class BinanceAggregationsLatestConsumer {
         try {
             BigDecimal scale = BigDecimal.TEN.pow(binanceTicker.getPriceScale());
 
-            // Binance has no single "price" field, only a two-sided bid/ask quote - unlike
-            // Coinbase, which has an explicit last-traded price. Using the midpoint as a
-            // stand-in for now; this is a deliberate simplification, not a hidden loss - the
-            // actual bid/ask spread isn't persisted at all yet, and revisiting that is
-            // exactly the spread-join work already sequenced later in the plan.
+            // Binance has no single "price" field, only a two-sided bid/ask quote
+            // Using the midpoint as a stand-in for now, this is a deliberate simplification
             BigDecimal price = BigDecimal.valueOf(binanceTicker.getBestBidPrice())
                     .add(BigDecimal.valueOf(binanceTicker.getBestAskPrice()))
                     .divide(BigDecimal.valueOf(2), PRICE_DECIMAL_PLACES, RoundingMode.HALF_UP)

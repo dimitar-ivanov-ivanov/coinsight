@@ -36,8 +36,6 @@ public class CoinbaseAggregationsLatestConsumer {
         try {
             BigDecimal scale = BigDecimal.TEN.pow(coinbaseTicker.getPriceScale());
 
-            // Coinbase has an explicit last-traded price field, unlike Binance - use it
-            // directly rather than deriving a midpoint.
             BigDecimal price = BigDecimal.valueOf(coinbaseTicker.getPrice())
                     .divide(scale, PRICE_DECIMAL_PLACES, RoundingMode.HALF_UP);
 
