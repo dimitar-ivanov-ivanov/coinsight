@@ -1,12 +1,13 @@
 package coinsight.arbitrage.aggregations.repositories;
 
 import coinsight.arbitrage.aggregations.pojo.OhlcPoint;
+import coinsight.arbitrage.aggregations.pojo.TickRow;
 import coinsight.arbitrage.aggregations.pojo.Tier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TickerRepository {
 
-    // Inserts a tick and handles idempontecy check with the DO NOTHING clause
+    // Inserts a batch of ticks and handles idempontecy check with the DO NOTHING clause
     private static final String INSERT_TICK_SQL = """
             INSERT INTO ticks (time, exchange, crypto_pair, price, message_id)
             VALUES (?, ?, ?, ?, ?)
@@ -30,16 +31,26 @@ public class TickerRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public void insertTick(OffsetDateTime time, String exchange, String cryptoPair, BigDecimal price, String messageId) {
-        jdbcTemplate.update(INSERT_TICK_SQL, time, exchange, cryptoPair, price, messageId);
+    @Transactional
+    public void insertTicks(List<TickRow> ticks) {
+        if (ticks.isEmpty()) {
+            return;
+        }
+
+        List<Object[]> batchArgs = ticks.stream()
+                .map(tick -> new Object[]{tick.time(), tick.exchange(), tick.cryptoPair(), tick.price(), tick.messageId()})
+                .toList();
+
+        jdbcTemplate.batchUpdate(INSERT_TICK_SQL, batchArgs);
     }
 
+    @Transactional(readOnly = true)
     public List<OhlcPoint> findOhlc(Tier tier, String cryptoPair, OffsetDateTime start, OffsetDateTime end, String exchange) {
         String table = switch (tier) {
-            case MINUTE -> "ticks_minute";
-            case THIRTY_MINUTE -> "ticks_30min";
-            case HOURLY -> "ticks_hourly";
-            case DAILY -> "ticks_daily";
+          case MINUTE -> "ticks_minute";
+          case THIRTY_MINUTE -> "ticks_30min";
+          case HOURLY -> "ticks_hourly";
+          case DAILY -> "ticks_daily";
         };
 
         StringBuilder sql = new StringBuilder(OHLC_SELECT.formatted(table));

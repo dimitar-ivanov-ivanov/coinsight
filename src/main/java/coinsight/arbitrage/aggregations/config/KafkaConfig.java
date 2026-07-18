@@ -42,6 +42,7 @@ public class KafkaConfig {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ProtobufDeserializer.class);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.GROUP_ID_CONFIG, binanceLatestGroup);
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 100);
 
         var consumerFactory = new DefaultKafkaConsumerFactory<>(props,
                 new StringDeserializer(),
@@ -52,6 +53,7 @@ public class KafkaConfig {
 
         factory.setConsumerFactory(consumerFactory);
         factory.setConcurrency(binanceConsumers); // Number of threads to process messages
+        factory.setBatchListener(true);
 
         // Retry configuration
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(
@@ -70,6 +72,7 @@ public class KafkaConfig {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ProtobufDeserializer.class);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.GROUP_ID_CONFIG, coinbaseLatestGroup);
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 100);
 
         var consumerFactory = new DefaultKafkaConsumerFactory<>(props,
                 new StringDeserializer(),
@@ -80,6 +83,7 @@ public class KafkaConfig {
 
         factory.setConsumerFactory(consumerFactory);
         factory.setConcurrency(coinbaseConsumers); // Number of threads to process messages
+        factory.setBatchListener(true);
 
         // Retry configuration
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(
