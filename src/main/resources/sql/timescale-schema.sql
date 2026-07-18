@@ -1,12 +1,13 @@
 -- Coinsight - TimescaleDB schema (Aggregations)
 --
 -- Tier design (see the diagram in README.md's Aggregations section):
---   ticks (raw hypertable) -> ticks_hourly -> ticks_daily -> ticks_weekly
--- Only "ticks" is a real, manually-created hypertable. Every tier above it is a
--- continuous aggregate.
--- Each tier is built FROM the tier directly below it, not from raw ticks again each time -
--- this is TimescaleDB's supported "hierarchical continuous aggregates" feature, so daily
--- reuses hourly's work instead of re-scanning raw data, and so on up the chain.
+--   ticks (raw hypertable)
+--     -> ticks_minute  -> ticks_30min                 (fine-grained branch: last hour/day/week)
+--     -> ticks_hourly  -> ticks_daily                  (coarser branch: last month)
+-- Only "ticks" is a real, manually-created hypertable. Everything above it is a continuous
+-- aggregate. Two independent branches off of raw ticks, not one long chain - ticks_hourly
+-- stays built directly from raw ticks (not from ticks_30min) on purpose, to avoid touching
+-- the already-working hourly/daily chain when this branch was added.
 
 -- 1. Raw ticks hypertable
 CREATE TABLE IF NOT EXISTS ticks (
@@ -40,7 +41,71 @@ ALTER TABLE ticks ADD CONSTRAINT ticks_time_pair_message_unique
 CREATE INDEX IF NOT EXISTS idx_ticks_pair_time
     ON ticks (crypto_pair, exchange, time DESC);
 
--- 2. Hourly OHLC continuous aggregate - built directly from raw ticks.
+-- 2a. Minute OHLC continuous aggregate - built directly from raw ticks.
+-- This is the historical "replay the last hour minute-by-minute" view - deliberately
+-- separate from the live WebSocket stream, which only ever shows the current instant.
+CREATE MATERIALIZED VIEW IF NOT EXISTS ticks_minute
+WITH (timescaledb.continuous) AS
+SELECT
+    time_bucket('1 minute', time) AS bucket,
+    exchange,
+    crypto_pair,
+    first(price, time) AS open,
+    max(price)         AS high,
+    min(price)         AS low,
+    last(price, time)  AS close,
+    avg(price)         AS avg_price,
+    count(*)           AS tick_count
+FROM ticks
+GROUP BY bucket, exchange, crypto_pair
+WITH NO DATA;
+
+-- Fixed absolute margins here, NOT "3x bucket width" like the coarser tiers below -
+-- 3x a 1-minute bucket is only 3 minutes, which a single container restart during
+-- development could easily exceed, permanently orphaning a bucket with no error.
+-- 30 minutes of margin is cheap either way and actually survives real downtime.
+-- Refreshing every minute is what makes this feel close to real-time for a "last hour"
+-- view - a slower schedule would make the most recent chart bars visibly stale.
+SELECT add_continuous_aggregate_policy('ticks_minute',
+    start_offset => INTERVAL '30 minutes',
+    end_offset => INTERVAL '1 minute',
+    schedule_interval => INTERVAL '1 minute',
+    if_not_exists => TRUE
+);
+
+-- 2b. 30-minute OHLC continuous aggregate - built FROM ticks_minute.
+CREATE MATERIALIZED VIEW IF NOT EXISTS ticks_30min
+WITH (timescaledb.continuous) AS
+SELECT
+    time_bucket('30 minutes', bucket) AS bucket,
+    exchange,
+    crypto_pair,
+    first(open, bucket) AS open,
+    max(high)           AS high,
+    min(low)            AS low,
+    last(close, bucket) AS close,
+    -- NOT avg(avg_price) - that would silently mis-weight the result unless every
+    -- minute bucket happened to have the exact same tick_count.
+    -- Meaning if one minute had 10 ticks and another minute had 100 ticks they should
+    -- have different weight.
+    sum(avg_price * tick_count) / sum(tick_count) AS avg_price,
+    sum(tick_count) AS tick_count
+FROM ticks_minute
+GROUP BY time_bucket('30 minutes', bucket), exchange, crypto_pair
+WITH NO DATA;
+
+-- end_offset (5 minutes) is comfortably larger than ticks_minute's own end_offset
+-- (1 minute) - by the time this runs for a given 30-minute bucket, ticks_minute has
+-- already finalized every minute inside it.
+SELECT add_continuous_aggregate_policy('ticks_30min',
+    start_offset => INTERVAL '3 hours',
+    end_offset => INTERVAL '5 minutes',
+    schedule_interval => INTERVAL '5 minutes',
+    if_not_exists => TRUE
+);
+
+-- 3. Hourly OHLC continuous aggregate - built directly from raw ticks (NOT from
+-- ticks_30min - separate branch, see the tier design note at the top of this file).
 CREATE MATERIALIZED VIEW IF NOT EXISTS ticks_hourly
 WITH (timescaledb.continuous) AS
 SELECT
@@ -67,9 +132,6 @@ SELECT add_continuous_aggregate_policy('ticks_hourly',
     schedule_interval => INTERVAL '10 minutes',
     if_not_exists => TRUE
 );
-
--- 3. Daily OHLC continuous aggregate - built FROM ticks_hourly
-DROP MATERIALIZED VIEW IF EXISTS ticks_daily CASCADE;
 
 CREATE MATERIALIZED VIEW ticks_daily
 WITH (timescaledb.continuous) AS
@@ -101,34 +163,7 @@ SELECT add_continuous_aggregate_policy('ticks_daily',
     if_not_exists => TRUE
 );
 
--- 4. Weekly OHLC continuous aggregate - built FROM ticks_daily
-CREATE MATERIALIZED VIEW IF NOT EXISTS ticks_weekly
-WITH (timescaledb.continuous) AS
-SELECT
-    time_bucket('1 week', bucket) AS bucket,
-    exchange,
-    crypto_pair,
-    first(open, bucket) AS open,
-    max(high)           AS high,
-    min(low)            AS low,
-    last(close, bucket) AS close,
-    sum(avg_price * tick_count) / sum(tick_count) AS avg_price,
-    sum(tick_count) AS tick_count
-FROM ticks_daily
-GROUP BY time_bucket('1 week', bucket), exchange, crypto_pair
-WITH NO DATA;
-
--- end_offset (1 day) deliberately larger than ticks_daily's own end_offset (1 hour) -
--- same staggering reasoning as above, one level up.
-SELECT add_continuous_aggregate_policy('ticks_weekly',
-    start_offset => INTERVAL '3 weeks',
-    end_offset => INTERVAL '1 day',
-    schedule_interval => INTERVAL '6 hours',
-    if_not_exists => TRUE
-);
-
 -- 1 month retention on raw ticks only - NOT on any rollup tier. Continuous
--- aggregates are backed by their own separate hypertable, so hourly/daily/weekly
--- can all outlive the raw data that fed them at negligible storage cost -
--- there's no reason to lose long-range history just because raw ticks expired.
+-- aggregates are backed by their own separate hypertable, so every rollup tier
+-- can outlive the raw data that fed it at negligible storage cost
 SELECT add_retention_policy('ticks', INTERVAL '1 month', if_not_exists => TRUE);
