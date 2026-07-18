@@ -47,10 +47,10 @@ public class TickerRepository {
     @Transactional(readOnly = true)
     public List<OhlcPoint> findOhlc(Tier tier, String cryptoPair, OffsetDateTime start, OffsetDateTime end, String exchange) {
         String table = switch (tier) {
-          case MINUTE -> "ticks_minute";
-          case THIRTY_MINUTE -> "ticks_30min";
-          case HOURLY -> "ticks_hourly";
-          case DAILY -> "ticks_daily";
+            case MINUTE -> "ticks_minute";
+            case THIRTY_MINUTE -> "ticks_30min";
+            case HOURLY -> "ticks_hourly";
+            case DAILY -> "ticks_daily";
         };
 
         StringBuilder sql = new StringBuilder(OHLC_SELECT.formatted(table));

@@ -69,6 +69,7 @@ public class CoinbaseAggregationsLatestConsumer {
 
         OffsetDateTime time = OffsetDateTime.parse(coinbaseTicker.getTimestamp());
 
-        return new TickRow(time, Exchange.COINBASE.getValue(), coinbaseTicker.getCryptoPair(), price, coinbaseTicker.getMessageId());
+        return new TickRow(time, Exchange.COINBASE.getValue(), coinbaseTicker.getCryptoPair(),
+                price, coinbaseTicker.getMessageId());
     }
 }
