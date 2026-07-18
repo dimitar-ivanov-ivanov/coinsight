@@ -1,6 +1,7 @@
 package coinsight.arbitrage.aggregations.consumer;
 
 import coinsight.arbitrage.aggregations.repositories.TickerRepository;
+import coinsight.arbitrage.shared.model.Exchange;
 import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import coinsight.arbitrage.shared.util.ExceptionUtils;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +16,6 @@ import java.time.OffsetDateTime;
 @Service
 @RequiredArgsConstructor
 public class BinanceAggregationsLatestConsumer {
-
-    private static final String EXCHANGE = "binance";
 
     private static final int PRICE_DECIMAL_PLACES = 8;
 
@@ -46,7 +45,7 @@ public class BinanceAggregationsLatestConsumer {
             OffsetDateTime time = OffsetDateTime.parse(binanceTicker.getTimestamp());
 
             tickerRepository.insertTick(
-                    time, EXCHANGE, binanceTicker.getCryptoPair(), price, binanceTicker.getMessageId());
+                    time, Exchange.BINANCE.getValue(), binanceTicker.getCryptoPair(), price, binanceTicker.getMessageId());
         } catch (Exception e) {
             monitoringService.publishEvent(
                     "Failed to persist Binance ticker: " + ExceptionUtils.rootCauseMessage(e), "ERROR", "aggregations");

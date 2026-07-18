@@ -2,6 +2,7 @@ package coinsight.arbitrage.aggregations.consumer;
 
 import coinbase.ticker.CoinbaseEvent;
 import coinsight.arbitrage.aggregations.repositories.TickerRepository;
+import coinsight.arbitrage.shared.model.Exchange;
 import coinsight.arbitrage.shared.monitoring.MonitoringService;
 import coinsight.arbitrage.shared.util.ExceptionUtils;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +16,6 @@ import java.time.OffsetDateTime;
 @Service
 @RequiredArgsConstructor
 public class CoinbaseAggregationsLatestConsumer {
-
-    private static final String EXCHANGE = "coinbase";
 
     private static final int PRICE_DECIMAL_PLACES = 8;
 
@@ -42,7 +41,7 @@ public class CoinbaseAggregationsLatestConsumer {
             OffsetDateTime time = OffsetDateTime.parse(coinbaseTicker.getTimestamp());
 
             tickerRepository.insertTick(
-                    time, EXCHANGE, coinbaseTicker.getCryptoPair(), price, coinbaseTicker.getMessageId());
+                    time, Exchange.COINBASE.getValue(), coinbaseTicker.getCryptoPair(), price, coinbaseTicker.getMessageId());
         } catch (Exception e) {
             monitoringService.publishEvent(
                     "Failed to persist Coinbase ticker: " + ExceptionUtils.rootCauseMessage(e), "ERROR", "aggregations");
