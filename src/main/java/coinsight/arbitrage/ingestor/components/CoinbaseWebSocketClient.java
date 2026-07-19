@@ -16,9 +16,7 @@ public class CoinbaseWebSocketClient extends WebSocketClient {
 
     private static final String COINBASE_URL = "wss://advanced-trade-ws.coinbase.com";
 
-    private static final List<String> STREAM_PARAMS = List.of("BTC-USDT", "BTC-USD", "ETH-USD",
-            "XRP-USD", "DOGE-USD", "SUI-USD",
-            "LINK-USD", "LINK/USD", "ADA-USD", "USDT-USD", "SOL-USD");
+    private static final List<String> STREAM_PARAMS = List.of("BTC-USDT", "ETH-USD", "XRP-USD", "SOL-USD");
 
     @Autowired
     private MonitoringService monitoringService;

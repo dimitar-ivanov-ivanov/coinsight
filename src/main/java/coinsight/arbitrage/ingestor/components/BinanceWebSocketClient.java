@@ -17,17 +17,10 @@ public class BinanceWebSocketClient extends WebSocketClient {
     private static final String BINANCE_URL = "wss://stream.binance.com:9443/ws";
 
     private static final List<String> STREAM_PARAMS
-        = List.of("btcusdc@ticker",
-            "btcusdt@ticker",
+        = List.of("btcusdt@ticker",
             "ethusdt@ticker",
             "solusdt@ticker",
-            "yoyobtc@ticker",
-            "sysbtc@ticker",
-            "qlcbnb@ticker",
-            "ethusdc@ticker",
-            "solusdt@ticker",
-            "bnbusdt@ticker",
-            "xrpusdt@ticke");
+            "xrpusdt@ticker");
 
     @Autowired
     private BinanceProcessor binanceProcessor;
