@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package spread;
+
+// A derived event, not raw exchange data - one per canonical crypto pair, re-computed
+// whenever either exchange's latest price updates (see SpreadStream - KTable-KTable join).
+message SpreadEvent {
+  string crypto_pair = 1;   // canonical form, e.g. "BTC-USDT" - see CryptoPairMapper
+  string message_id = 2;    // deterministic, derived from both source tickers' message_ids
+  string timestamp = 3;     // ISO8601, when this spread was computed
+
+  double binance_best_bid = 4;
+  double binance_best_ask = 5;
+  double coinbase_best_bid = 6;
+  double coinbase_best_ask = 7;
+
+  // Both directions on purpose - arbitrage isn't symmetric. Buy on the exchange with the
+  // lower ask, sell on the exchange with the higher bid - a naive midpoint diff would show
+  // a "spread" nobody could actually execute at.
+  double spread_buy_binance_sell_coinbase = 8; // coinbase_best_bid - binance_best_ask
+  double spread_buy_coinbase_sell_binance = 9; // binance_best_bid - coinbase_best_ask
+}

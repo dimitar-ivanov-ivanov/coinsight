@@ -56,10 +56,6 @@ kafka:
       topic: binance-latest-topic
       group: binance-latest-group
       consumers: 10
-      # Distinct group from BFF's above - two independent consumer applications reading the
-      # same topic need their own group ID each, or Kafka splits the topic's partitions
-      # between them as if they were one job, and each one silently only sees a subset of
-      # events instead of all of them.
       aggregations-group: binance-latest-aggregations-group
       aggregations-consumers: 10
     dlt:
@@ -82,6 +78,8 @@ kafka:
       consumers: 2
   monitoring:
     topic: monitor-topic
+  spread:
+    topic: arbitrage-spread-topic
   streams:
     # No separate applicationId/commitInterval here for the different streams
     # setting - those are shared across the whole app (see KafkaStreamsConfig)

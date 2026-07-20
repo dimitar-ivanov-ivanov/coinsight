@@ -109,6 +109,10 @@ Both Binance and Coinbase have their own topology (`BinanceStream`/`CoinbaseStre
 `Produced`) instead of relying on the app's default value serde - a single global default can't correctly serve two different ticker types at once, so
 neither topology depends on it.
 
+## Spread
+`SpreadStream` reads `binance-latest-topic`/`coinbase-latest-topic` and joins them on a
+shared canonical pair identifier, writing the result to `arbitrage-spread-topic`.
+
 # Coinsight BFF
 When the user opens their mobile a socket is opened to the BFF.
 The BFF listens to the output topics (`binance-latest-topic`/`coinbase-latest-topic`) and whatever comes through is sent through the socket to the client,
@@ -159,6 +163,8 @@ with no manual setup
     - create binance latest topic with 1 minute retention 
 - [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic coinbase-latest-topic --bootstrap-server broker1:19092 --partitions 10 --replication-factor 3 --config retention.ms=60000 --config segment.ms=300000``
   - create binance latest topic with 1 minute retention
+- [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic arbitrage-spread-topic --bootstrap-server broker1:19092 --partitions 10 --replication-factor 3 --config retention.ms=60000 --config segment.ms=300000``
+  - create the derived spread topic (SpreadStream's output) with 1 minute retention, same as the other latest-topics
 - [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic binance-dlt-topic --bootstrap-server broker1:19092 --partitions 2 --replication-factor 3 --config retention.ms=259200000``
     - create binance dlt topic with 3 day retention
 - [TOPIC CREATION] ``docker exec -it broker1 /opt/kafka/bin/kafka-topics.sh --create --topic coinbase-dlt-topic --bootstrap-server broker1:19092 --partitions 2 --replication-factor 3 --config retention.ms=259200000``
