@@ -72,7 +72,8 @@ public class SpreadStream {
                         .withKeySerde(Serdes.String())
                         .withValueSerde(coinbaseSerde))
                 .reduce((oldVal, newVal) -> newVal,
-                        Materialized.<String, CoinbaseEvent.CoinbaseTicker, KeyValueStore<Bytes, byte[]>>as("coinbase-canonical-store")
+                        Materialized.<String, CoinbaseEvent.CoinbaseTicker,
+                                        KeyValueStore<Bytes, byte[]>>as("coinbase-canonical-store")
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(coinbaseSerde));
 

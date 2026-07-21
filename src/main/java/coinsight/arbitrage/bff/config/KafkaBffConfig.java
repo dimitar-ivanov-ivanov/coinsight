@@ -11,6 +11,7 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.FixedBackOff;
+import spread.SpreadEventOuterClass.SpreadEvent;
 import ticker.BinanceTickerOuterClass.BinanceTicker;
 
 import java.util.HashMap;
@@ -33,6 +34,12 @@ public class KafkaBffConfig {
 
     @Value("${kafka.coinbase.latest.consumers}")
     private int coinbaseConsumers;
+
+    @Value("${kafka.spread.group}")
+    private String spreadGroup;
+
+    @Value("${kafka.spread.consumers}")
+    private int spreadConsumers;
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, BinanceTicker> binanceLatestListenerContainerFactory() {
@@ -80,6 +87,34 @@ public class KafkaBffConfig {
 
         factory.setConsumerFactory(consumerFactory);
         factory.setConcurrency(coinbaseConsumers); // Number of threads to process messages
+
+        // Retry configuration
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(
+                new FixedBackOff(500L, 1L) // 1 retry after 500ms
+        );
+
+        factory.setCommonErrorHandler(errorHandler);
+        return factory;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, SpreadEvent> spreadListenerContainerFactory() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ProtobufDeserializer.class);
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, spreadGroup);
+
+        var consumerFactory = new DefaultKafkaConsumerFactory<>(props,
+                new StringDeserializer(),
+                new ProtobufDeserializer<>(SpreadEvent.parser()));
+
+        ConcurrentKafkaListenerContainerFactory<String, SpreadEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(consumerFactory);
+        factory.setConcurrency(spreadConsumers); // Number of threads to process messages
 
         // Retry configuration
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(

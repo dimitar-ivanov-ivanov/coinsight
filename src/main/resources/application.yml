@@ -80,6 +80,8 @@ kafka:
     topic: monitor-topic
   spread:
     topic: arbitrage-spread-topic
+    group: spread-bff-group
+    consumers: 10
   streams:
     # No separate applicationId/commitInterval here for the different streams
     # setting - those are shared across the whole app (see KafkaStreamsConfig)

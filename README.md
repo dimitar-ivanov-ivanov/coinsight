@@ -115,8 +115,8 @@ shared canonical pair identifier, writing the result to `arbitrage-spread-topic`
 
 # Coinsight BFF
 When the user opens their mobile a socket is opened to the BFF.
-The BFF listens to the output topics (`binance-latest-topic`/`coinbase-latest-topic`) and whatever comes through is sent through the socket to the client,
-on `/topic/binance` and `/topic/coinbase` respectively.
+The BFF listens to the output topics (`binance-latest-topic`/`coinbase-latest-topic`/`arbitrage-spread-topic`) and whatever comes through is sent through
+the socket to the client, on `/topic/binance`, `/topic/coinbase`, and `/topic/spread` respectively.
 
 There is no idempotency check here on purpose. A duplicate live tick just means the client renders the same price
 twice in a row - cosmetically invisible for a live ticker, not worth an extra Redis round-trip per message for a
