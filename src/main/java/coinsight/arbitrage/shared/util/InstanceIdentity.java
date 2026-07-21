@@ -6,11 +6,6 @@ import java.util.UUID;
 
 /**
  * Per-JVM identity constants, generated once at class-load time.
- *
- * <p>Used by {@code LeaderElectorService} (ingestor's Redis-based leader election) and by
- * {@code coinsight.arbitrage.shared.monitoring.MonitoringMapper} (monitoring events) - both
- * just need a stable way to identify "this running instance", which is all this class provides.
- * It doesn't contain any leader-election or monitoring logic itself.
  */
 public class InstanceIdentity {
 
