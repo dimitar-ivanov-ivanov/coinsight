@@ -58,7 +58,9 @@ we scale horizontally.
 # Coinsight Aggregations
 Aggregations consumes from `binance-latest-topic`/`coinbase-latest-topic` - the windowed output of Streams, not the raw
 exchange topics - one event at a time via a plain `@KafkaListener` per exchange (`BinanceAggregationsLatestConsumer`/
-`CoinbaseAggregationsLatestConsumer`), each writing straight to TimescaleDB
+`CoinbaseAggregationsLatestConsumer`), each writing straight to TimescaleDB. The reason for storing each separate latest tick per exchange 
+is that there may be cryto pair that are present in one exchange but not present in other exchanges so calculating a different is impossible 
+and in that case we fall back to whatever value we have for the exchange the pair is present in.
 
 No batching, no sub-batches by crypto pair, no virtual threads - the actual write is a single `JdbcTemplate` insert per
 event. Idempotency is handled entirely by the DB itself: `ticks` has a `UNIQUE (time, crypto_pair, message_id)`
